@@ -1,0 +1,29 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mum's care visits</title><link rel="stylesheet" href="/web/style.css"></head>
+<body><main>
+<h1>Mum's care visits</h1><p class="sub" id="rules">Loading…</p>
+<div class="card"><div class="stat"><div><b id="sPaid">-</b>paid</div><div><b id="sWait">-</b>waiting</div><div><b id="sNo">-</b>not paid</div></div></div>
+<div class="card"><h3 style="margin:0 0 6px">Messages from your agent</h3><div id="msgs"></div></div>
+<div class="card"><h3 style="margin:0 0 6px">Every visit</h3><div id="visits"></div></div>
+<p class="small" id="chain"></p>
+</main>
+<script type="module">
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const day = (t) => new Date(t * 1000).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Seoul' });
+const LABEL = { Paid: 'paid', Rejected: 'did not happen', Held: 'waits for you', Posted: 'waiting for Mum', Confirmed: 'paying…' };
+async function load() {
+  const [cfg, vs, ms] = await Promise.all(['/api/config', '/api/visits', '/api/messages'].map((u) => fetch(u).then((r) => r.json())));
+  document.getElementById('rules').textContent = `Your rules: at most ${cfg.weeklyMax} visits a week, at most ${Number(cfg.perVisitCap).toLocaleString('en-US')} won a visit. Only visits Mum confirms are paid.`;
+  document.getElementById('sPaid').textContent = vs.filter((v) => v.status === 'Paid').length;
+  document.getElementById('sWait').textContent = vs.filter((v) => ['Posted', 'Held', 'Confirmed'].includes(v.status)).length;
+  document.getElementById('sNo').textContent = vs.filter((v) => v.status === 'Rejected').length;
+  document.getElementById('msgs').innerHTML = ms.length ? ms.slice(0, 6).map((m) => `<div class="msg"><time>${esc(new Date(m.at).toLocaleString('en-GB', { timeZone: 'Asia/Seoul' }))}</time>${esc(m.text)}</div>`).join('') : '<p class="small">Nothing yet.</p>';
+  const ex = cfg.explorer;
+  document.getElementById('visits').innerHTML = vs.slice().reverse().map((v) => `<div class="row"><div><b>${esc(day(v.visitTime))}</b> · ${esc(v.receipt?.carer || 'carer')} · ${Number(v.amount).toLocaleString('en-US')} won
+    ${v.payment ? `<div class="small">${v.payment.mode === 'mock' ? 'HSP MOCK (test run)' : 'HSP ' + esc(v.payment.status)}${ex && v.payment.markPaidTx ? ` · <a href="${esc(ex)}/tx/${esc(v.payment.markPaidTx)}" target="_blank" rel="noopener">on chain</a>` : ''}</div>` : ''}</div>
+    <div>${v.status === 'Held' ? `<button class="approve" data-v="${v.id}">Approve</button>` : `<span class="pill ${esc(v.status)}">${esc(LABEL[v.status] || v.status)}</span>`}</div></div>`).join('') || '<p class="small">No visits yet.</p>';
+  document.querySelectorAll('.approve').forEach((b) => b.onclick = async () => { b.disabled = true; await fetch('/api/approve', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ visitId: +b.dataset.v }) }); load(); });
+  document.getElementById('chain').innerHTML = `Rules and every visit are on ${esc(cfg.network)}: contract ${ex ? `<a href="${esc(ex)}/address/${esc(cfg.contract)}" target="_blank" rel="noopener"><code>${esc(cfg.contract)}</code></a>` : `<code>${esc(cfg.contract)}</code>`}. Payments: HSP ${cfg.hspMode === 'mock' ? 'MOCK (test run, no money moves)' : 'QA'}.`;
+}
+load(); setInterval(load, 4000);
+</script></body></html>

@@ -1,0 +1,41 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Today's visit</title><link rel="stylesheet" href="/web/style.css">
+<script type="importmap">{ "imports": { "@noble/hashes/crypto": "/vendor/hashes/crypto.js" } }</script></head>
+<body><main>
+<h1>Hello, Mum</h1><p class="sub">One question after each visit. Your answer is all it takes.</p>
+<div id="q" class="card"><p class="who">Loading…</p></div>
+<p class="small" id="key"></p>
+</main>
+<script type="module">
+import { digest, pageKey, address, sign } from '/web/eip712.js';
+const pk = pageKey(), me = address(pk);
+const cfg = await (await fetch('/api/config')).json();
+const q = document.getElementById('q');
+document.getElementById('key').textContent = cfg.confirmer.toLowerCase() === me.toLowerCase() ? 'This tablet is set up for your visits.' : 'This tablet\'s key (give it to Mina to set up): ' + me;
+const day = (t) => new Date(t * 1000).toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'Asia/Seoul' });
+const time = (t) => new Date(t * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' });
+async function show() {
+  const vs = await (await fetch('/api/visits')).json();
+  const v = vs.filter((x) => x.status === 'Posted').sort((a, b) => a.visitTime - b.visitTime)[0];
+  if (!v) { q.innerHTML = '<p class="done">Nothing to answer. Thank you!</p>'; return; }
+  const r = v.receipt || {};
+  q.innerHTML = '';
+  const p = document.createElement('p'); p.className = 'big';
+  p.textContent = `Did ${r.carer || 'your carer'} visit you on ${day(v.visitTime)} at ${time(v.visitTime)}?`;
+  const w = document.createElement('p'); w.className = 'who'; w.textContent = r.tasks ? 'They wrote: ' + r.tasks : '';
+  const b = document.createElement('div'); b.className = 'btns';
+  for (const [label, ok, cls] of [['Yes', true, 'yes'], ['No', false, 'no']]) {
+    const x = document.createElement('button'); x.className = cls; x.textContent = label;
+    x.onclick = async () => {
+      b.querySelectorAll('button').forEach((y) => y.disabled = true);
+      const s = sign(pk, digest(cfg.chainId, cfg.contract, v.id, ok));
+      const res = await fetch('/api/confirm', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ visitId: v.id, happened: ok, ...s }) });
+      q.innerHTML = res.ok ? `<p class="done">${ok ? 'Thank you. Mina will see it.' : 'Thank you. Nothing will be paid for this one.'}</p>` : '<p class="who">That did not go through. Please try again in a minute.</p>';
+      setTimeout(show, 2500);
+    };
+    b.appendChild(x);
+  }
+  q.append(p, w, b);
+}
+show();
+</script></body></html>
