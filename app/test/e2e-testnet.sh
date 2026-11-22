@@ -1,5 +1,5 @@
 #!/bin/bash
-# HSK Chain TESTNET (133) end to end with REAL HSP payments (HSP QA, Base Sepolia test USDC), for the moment HSP allowlists our IP.
+# HSK Chain TESTNET (133) end to end with REAL HSP payments (HSP QA, Circle test USDC on Ethereum Sepolia), for the moment HSP allowlists our IP.
 # Deploys CareMandate + Mina's mandate on HSK testnet, the agency posts 5 visits, Mum answers in the real page (yes/no/yes/yes/yes),
 # Mina approves the held 4th visit; every confirmed visit is paid through HSP (HSP_MODE=qa) and the HSP flow id is recorded on chain.
 # Gas: ~2.3M on HSK testnet (test HSK from the faucet). HSP: 4 x 0.01 USD of test USDC from the QA payer (holds ~19.9).

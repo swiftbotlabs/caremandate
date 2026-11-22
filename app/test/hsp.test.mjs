@@ -35,13 +35,16 @@ function fakeHsp({ prep = prepFor(), statuses = ['payment-processing', 'payment-
   } };
 }
 
-test('pickToken: flat live config -> EIP-3009 USDC on Base Sepolia', () => {
+test('pickToken: default is Circle USDC on Ethereum Sepolia (the event HSP test network); base-sepolia when asked', () => {
   const t = pickToken({ code: 0, data: CFG });
-  assert.equal(t.chainId, 84532); assert.equal(t.address, '0x036CbD53842c5426634e7929541eC2318f3dCF7e'); assert.equal(t.decimals, 6);
+  assert.equal(t.network, 'sepolia'); assert.equal(t.chainId, 11155111); assert.equal(t.address, '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238'); assert.equal(t.decimals, 6);
+  const b = pickToken({ code: 0, data: CFG }, 'base-sepolia');
+  assert.equal(b.chainId, 84532); assert.equal(b.address, '0x036CbD53842c5426634e7929541eC2318f3dCF7e');
 });
 
 test('qa flow: order, firewall, real signature, submit, poll to payment-safe', async () => {
   process.env.HSP_POLL_MS = '1';
+  process.env.HSP_NETWORK = 'base-sepolia';   // the recorded live prepare_payment fixture is a Base Sepolia payment
   const hsp = fakeHsp();
   let typedSeen;
   const r = await payVisit({ mode: 'qa', visitId: 7, amountUsd: '0.01', payTo, payer: payer.address, client: hsp, now: () => NOW,

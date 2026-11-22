@@ -37,7 +37,7 @@ Environment for the server: `CM_NET` (local, testnet, mainnet), `CM_CONTRACT`, `
 `AGENCY_PAYTO`, `HSP_MODE` (qa or mock), `HSP_PAYER_PK`, `HSP_AMOUNT_USD` (default 0.01), `PORT`.
 
 ## HSP
-HSP's QA environment is open to hackathon teams by IP allowlist. Its test payments settle in test USDC on Base Sepolia (HSK Chain
+HSP's QA environment is open to hackathon teams by IP allowlist. Its test payments settle in Circle test USDC on Ethereum Sepolia (HSK Chain
 testnet USDC can't be minted by teams), so the visit records live on HSK Chain and the money moves through HSP. Every payment is reported
 under the team name `Swift Bot Labs (CareMandate)`.
 

@@ -14,7 +14,7 @@ const ctx = connect();
 const C = process.env.CM_CONTRACT, M = Number(process.env.CM_MANDATE || 1);
 const agent = ctx.wallet(process.env.FAMILY_AGENT_PK);
 const family = process.env.FAMILY_PK ? ctx.wallet(process.env.FAMILY_PK) : null;
-// HSP pays on its own testnet (Base Sepolia USDC in QA): the family agent's HSP payer key, separate from its HSK Chain key.
+// HSP pays on its own testnet (Circle USDC on Ethereum Sepolia for this event): the family agent's HSP payer key, separate from its HSK Chain key.
 const hspPayer = process.env.HSP_PAYER_PK ? ctx.wallet(process.env.HSP_PAYER_PK) : agent;
 const STATE = process.env.CM_STATE || path.join(ROOT, 'state.json');
 const load = () => { try { return JSON.parse(fs.readFileSync(STATE, 'utf8')); } catch { return { messages: [], receipts: {}, payments: {} }; } };

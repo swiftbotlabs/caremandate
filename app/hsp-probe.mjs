@@ -1,4 +1,4 @@
-// One real HSP QA payment probe, for the moment HSP allowlists our egress IP. Testnet USDC only (Base Sepolia), 0.01 USD.
+// One real HSP QA payment probe, for the moment HSP allowlists our egress IP. Testnet USDC only (Circle USDC on Ethereum Sepolia by default; HSP_NETWORK to change), 0.01 USD.
 //   node hsp-probe.mjs --dry     reach HSP, create the order, run the signing firewall, STOP before signing (nothing paid)
 //   node hsp-probe.mjs           the same, then sign, submit and poll to payment-safe; prints the flow id and tx
 // Env: HSP_PAYER_ENV = an env file with HSP_QA_KEY (the payer's testnet key), HSP_PAYTO = the address to pay (or HSP_MERCHANT_ENV,

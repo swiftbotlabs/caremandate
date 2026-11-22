@@ -11,7 +11,9 @@ import crypto from 'node:crypto';
 
 const QA_URL = process.env.HSP_MCP_URL || 'https://mcp-qa.hashkeymerchant.com/';
 export const MERCHANT = process.env.HSP_MERCHANT_NAME || 'Swift Bot Labs (CareMandate)';
-const NETWORK = process.env.HSP_NETWORK || 'base-sepolia';   // HSP's QA config pays USDC on Base Sepolia (Circle's public faucet)
+// HSP payment testing for this event settles in Circle USDC on Ethereum Sepolia (organizer, 2026-11-22; faucet.circle.com).
+// HSP's chain config also lists base-sepolia and arbitrum-sepolia; HSP_NETWORK selects another one.
+const network = () => process.env.HSP_NETWORK || 'sepolia';
 const PER_PAYMENT_CAP_USD = Number(process.env.HSP_CAP_USD || 0.05);
 const FEE_ALLOWANCE = 1.05;                                  // HSP converts USD at a live rate (0.01 USD -> 10002 raw seen live)
 const POLL_MS = Number(process.env.HSP_POLL_MS || 15000);
@@ -81,14 +83,14 @@ const chainInt = (v) => typeof v === 'number' ? v : typeof v === 'string' ? (/^0
 const same = (a, b) => String(a || '').toLowerCase() === String(b || '').toLowerCase();
 
 // ---------------------------------------------------------------- chain config: the token we pay with
-export function pickToken(cfgIn, network = NETWORK) {
+export function pickToken(cfgIn, net = network()) {
   const cfg = holder(cfgIn, 'tokens');
-  const nets = (cfg.networks || []).filter((n) => n.name === network);
-  if (!nets.length) throw new HspError(`HSP chain config has no network ${network}`);
+  const nets = (cfg.networks || []).filter((n) => n.name === net);
+  if (!nets.length) throw new HspError(`HSP chain config has no network ${net}`);
   const chainId = chainInt(nets[0].chain_id);
   const tok = (cfg.tokens || []).find((t) => chainInt(t.chain_id) === chainId && t.symbol === 'USDC' && t.payment_protocol === 'eip3009');
-  if (!tok || !/^0x[0-9a-fA-F]{40}$/.test(tok.address)) throw new HspError(`HSP chain config has no EIP-3009 USDC on ${network}`);
-  return { network, chainId, address: tok.address, decimals: Number(tok.decimals ?? 6), name: tok.name || 'USDC', version: String(tok.version || '2') };
+  if (!tok || !/^0x[0-9a-fA-F]{40}$/.test(tok.address)) throw new HspError(`HSP chain config has no EIP-3009 USDC on ${net}`);
+  return { network: net, chainId, address: tok.address, decimals: Number(tok.decimals ?? 6), name: tok.name || 'USDC', version: String(tok.version || '2') };
 }
 
 // ---------------------------------------------------------------- the Cart Mandate for one visit
