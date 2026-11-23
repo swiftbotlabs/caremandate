@@ -27,6 +27,7 @@ export function mcpClient(url = QA_URL, fetchImpl = fetch) {
   async function post(body, expectReply = true) {
     const headers = { 'content-type': 'application/json', accept: 'application/json, text/event-stream' };
     if (session) headers['mcp-session-id'] = session;
+    if (process.env.HSP_RELAY_TOKEN) headers['x-relay-token'] = process.env.HSP_RELAY_TOKEN;   // only when HSP_MCP_URL points at relay/
     const r = await fetchImpl(url, { method: 'POST', headers, body: JSON.stringify(body), signal: AbortSignal.timeout(60000) });
     if (r.status === 403) throw new HspError('HSP QA refused our network (403): egress IP not on the allowlist', 403);
     if (!r.ok && r.status !== 202) throw new HspError(`HSP MCP HTTP ${r.status}`, r.status);
