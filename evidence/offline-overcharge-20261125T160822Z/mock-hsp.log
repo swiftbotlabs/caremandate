@@ -1,0 +1,13 @@
+{"at":"2026-11-25T16:08:25.172Z","event":"mock-hsp up","port":8795,"network":"hashkey-testnet","chainId":133,"token":"0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6","onChain":true,"settleS":6,"fail":"overcharge"}
+{"at":"2026-11-25T16:09:16.297Z","tool":"get_chain_config"}
+{"at":"2026-11-25T16:09:16.300Z","tool":"create_order"}
+{"at":"2026-11-25T16:09:16.301Z","tool":"get_order","flow":"MOCKHSP-ab8d8469-d152-47ae-a45c-a13abc21708a"}
+{"at":"2026-11-25T16:09:16.303Z","tool":"prepare_payment","flow":"MOCKHSP-ab8d8469-d152-47ae-a45c-a13abc21708a"}
+{"at":"2026-11-25T16:09:27.259Z","tool":"get_chain_config"}
+{"at":"2026-11-25T16:09:27.262Z","tool":"create_order"}
+{"at":"2026-11-25T16:09:27.264Z","tool":"get_order","flow":"MOCKHSP-ec5a7f93-7960-495a-b99a-6a3741e4e805"}
+{"at":"2026-11-25T16:09:27.265Z","tool":"prepare_payment","flow":"MOCKHSP-ec5a7f93-7960-495a-b99a-6a3741e4e805"}
+{"at":"2026-11-25T16:09:35.328Z","tool":"get_chain_config"}
+{"at":"2026-11-25T16:09:35.330Z","tool":"create_order"}
+{"at":"2026-11-25T16:09:35.332Z","tool":"get_order","flow":"MOCKHSP-0ebd9098-da43-4d7a-921d-9e472ae98975"}
+{"at":"2026-11-25T16:09:35.333Z","tool":"prepare_payment","flow":"MOCKHSP-0ebd9098-da43-4d7a-921d-9e472ae98975"}

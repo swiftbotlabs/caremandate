@@ -1,0 +1,40 @@
+{"at":"2026-11-25T16:08:33.815Z","agent":"agency","event":"start","net":"local","contract":"0xe7f1725e7734ce288f8367e1bb143e90bb3f0512","mandate":1,"payTo":"0x58232CF98671Bc0Bd0E7aaA7cd6adE9EdB2E64A6","token":"0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6","settleRpc":"http://127.0.0.1:8545","every":2000}
+{"at":"2026-11-25T16:08:33.860Z","agent":"agency","event":"check","rc":0,"head":3,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:08:35.861Z","agent":"agency","event":"check","rc":0,"head":3,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:08:37.889Z","agent":"agency","event":"check","rc":0,"head":4,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:08:39.894Z","agent":"agency","event":"check","rc":0,"head":4,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:08:41.907Z","agent":"agency","event":"check","rc":0,"head":4,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:08:43.910Z","agent":"agency","event":"check","rc":0,"head":4,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:08:45.955Z","agent":"agency","event":"check","rc":0,"head":5,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:08:47.959Z","agent":"agency","event":"check","rc":0,"head":5,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:08:49.971Z","agent":"agency","event":"check","rc":0,"head":5,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:08:51.976Z","agent":"agency","event":"check","rc":0,"head":5,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:08:54.003Z","agent":"agency","event":"check","rc":0,"head":6,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:08:56.006Z","agent":"agency","event":"check","rc":0,"head":6,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:08:58.027Z","agent":"agency","event":"check","rc":0,"head":6,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:00.033Z","agent":"agency","event":"check","rc":0,"head":6,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:02.054Z","agent":"agency","event":"check","rc":0,"head":7,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:04.057Z","agent":"agency","event":"check","rc":0,"head":7,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:06.069Z","agent":"agency","event":"check","rc":0,"head":8,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:08.071Z","agent":"agency","event":"check","rc":0,"head":8,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:10.078Z","agent":"agency","event":"check","rc":0,"head":8,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:12.079Z","agent":"agency","event":"check","rc":0,"head":8,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:14.107Z","agent":"agency","event":"check","rc":0,"head":9,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:16.110Z","agent":"agency","event":"check","rc":0,"head":9,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:18.146Z","agent":"agency","event":"issue_seen","visitId":1,"issue":4,"count":1,"tx":"0x3fe7a1d8e8f03c6954387130092d0f8689cd9400d310f6a5418abc311fe4fd0b","note":"visit confirmed, not paid yet: waiting"}
+{"at":"2026-11-25T16:09:18.146Z","agent":"agency","event":"check","rc":0,"head":10,"settledEvents":0,"issueEvents":1,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:20.148Z","agent":"agency","event":"check","rc":0,"head":10,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:22.171Z","agent":"agency","event":"check","rc":0,"head":11,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:24.172Z","agent":"agency","event":"check","rc":0,"head":11,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:26.196Z","agent":"agency","event":"check","rc":0,"head":12,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:28.198Z","agent":"agency","event":"check","rc":0,"head":12,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:30.225Z","agent":"agency","event":"issue_seen","visitId":3,"issue":4,"count":1,"tx":"0x05fd99b03db6753391c326bc79db379cba6d3fc41b6ce81026a56e7793b59dd5","note":"visit confirmed, not paid yet: waiting"}
+{"at":"2026-11-25T16:09:30.225Z","agent":"agency","event":"check","rc":0,"head":13,"settledEvents":0,"issueEvents":1,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:32.229Z","agent":"agency","event":"check","rc":0,"head":13,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:34.254Z","agent":"agency","event":"check","rc":0,"head":14,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:36.259Z","agent":"agency","event":"check","rc":0,"head":14,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:38.274Z","agent":"agency","event":"issue_seen","visitId":4,"issue":4,"count":1,"tx":"0x4c06bdf79f77f98271f91aa4d7265580018aa2f89a36db683b4ac2836a4254c1","note":"visit confirmed, not paid yet: waiting"}
+{"at":"2026-11-25T16:09:38.274Z","agent":"agency","event":"check","rc":0,"head":15,"settledEvents":0,"issueEvents":1,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:40.286Z","agent":"agency","event":"check","rc":0,"head":15,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:42.292Z","agent":"agency","event":"check","rc":0,"head":16,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-25T16:09:44.294Z","agent":"agency","event":"check","rc":0,"head":16,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}

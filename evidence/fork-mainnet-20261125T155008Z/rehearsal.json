@@ -1,0 +1,77 @@
+{
+ "fork": {
+  "chainId": 177,
+  "block": 30637338
+ },
+ "contract": "0x38a024c0b412b9d1db8bc398140d00f5af3093d4",
+ "captrip": "BadInput",
+ "visit1": {
+  "status": "Paid",
+  "paidRaw": "32376474",
+  "limitRaw": "33992806",
+  "agencyAck": true
+ },
+ "fx": {
+  "krwPerUsd": 1390,
+  "scale": 1,
+  "rawPerMillionWon": "719424460",
+  "capUsd": "32.37"
+ },
+ "price": {
+  "gasPriceGwei": 500.001,
+  "hskUsd": 0.076512,
+  "source": "CoinGecko hashkey-ecopoints 2026-11-25T15:50Z"
+ },
+ "steps": [
+  {
+   "name": "deploy CareMandate",
+   "gas": 1554992,
+   "tx": "0x030945c0e6ff963a4cc72d04685394d3c91a1b7c039ed4409179a0b91cd9827f",
+   "hsk": "0.77750",
+   "usd": "0.0595"
+  },
+  {
+   "name": "createMandate (45,000 won cap, 3/week, real-scale rate)",
+   "gas": 163297,
+   "tx": "0x3d7c4bf447c77ff2f8c71ec4fe5e4a7affb62cc3835c237ba61a31f7557a4bbc",
+   "hsk": "0.08165",
+   "usd": "0.0062"
+  },
+  {
+   "name": "postVisit (agency agent)",
+   "gas": 123603,
+   "tx": "0x0b0c1daec70661b7a9035668dd0e33fc9c47f0ebd68183bfe7b3cd3338548526",
+   "hsk": "0.06180",
+   "usd": "0.0047"
+  },
+  {
+   "name": "confirmBySig (Mum's yes, relayed by the family agent)",
+   "gas": 61534,
+   "tx": "0xe7daa3f734e5b4acbdd4c383e59248e892139b5102298f7a1335b2b63a561d2c",
+   "hsk": "0.03077",
+   "usd": "0.0024"
+  },
+  {
+   "name": "markPaid (paidRaw + settlement tx)",
+   "gas": 104304,
+   "tx": "0xf1b9f1de6c3e3579168be28ce6eff3fd6b5cdbd1e6364f5fddee6951e1c40163",
+   "hsk": "0.05215",
+   "usd": "0.0040"
+  },
+  {
+   "name": "ackPaid (agency agent)",
+   "gas": 52091,
+   "tx": "0x9d6bcfbd018c56c0b517ef32a4f83348256183875077ece26a3060d53bc8b700",
+   "hsk": "0.02605",
+   "usd": "0.0020"
+  }
+ ],
+ "totals": {
+  "deployAndMandateGas": 1718289,
+  "deployAndMandateUsd": "0.0657",
+  "fullCycleGas": 2059821,
+  "fullCycleUsd": "0.0788",
+  "perVisitGas": 341532,
+  "perVisitUsd": "0.0131"
+ }
+}

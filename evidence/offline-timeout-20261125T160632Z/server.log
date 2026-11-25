@@ -1,0 +1,46 @@
+{"at":"2026-11-25T16:06:48.048Z","event":"start","port":8791,"net":"local","contract":"0xe7f1725e7734ce288f8367e1bb143e90bb3f0512","hspMode":"qa","hspNetwork":"hashkey-testnet","payTo":"0x58232CF98671Bc0Bd0E7aaA7cd6adE9EdB2E64A6","payer":"0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"}
+caremandate on :8791 local 0xe7f1725e7734ce288f8367e1bb143e90bb3f0512
+{"at":"2026-11-25T16:07:31.151Z","event":"request","path":"/api/confirm","visitId":1,"happened":true}
+{"at":"2026-11-25T16:07:35.220Z","event":"confirmed","visitId":1,"happened":true,"status":"Confirmed","tx":"0xfe73a8cb32a4be01bd01a032bd03203317cd74aed16e940fcc882cee800c2417"}
+{"at":"2026-11-25T16:07:35.222Z","event":"pay_queued","visitId":1,"mode":"qa","attempt":1}
+{"at":"2026-11-25T16:07:35.224Z","event":"http","method":"POST","path":"/api/confirm","code":200,"ms":4073}
+{"at":"2026-11-25T16:07:35.226Z","event":"pay_start","visitId":1,"mode":"qa","network":"hashkey-testnet","payTo":"0x58232CF98671Bc0Bd0E7aaA7cd6adE9EdB2E64A6","payer":"0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65","usd":"0.03","won":"45000","rate":"719424","maxRaw":"33993"}
+{"at":"2026-11-25T16:07:35.254Z","event":"hsp","visitId":1,"step":"create_order","flowId":"MOCKHSP-251e1572-88c3-41a9-9efb-eebfb994dd94","prId":"CARE-PR-20261125160735-94a339"}
+{"at":"2026-11-25T16:07:35.257Z","event":"hsp","visitId":1,"step":"firewall_ok","flowId":"MOCKHSP-251e1572-88c3-41a9-9efb-eebfb994dd94","raw":"30002","maxRaw":"33993","network":"hashkey-testnet","token":"0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6"}
+{"at":"2026-11-25T16:07:35.276Z","event":"hsp","visitId":1,"step":"submitted","flowId":"MOCKHSP-251e1572-88c3-41a9-9efb-eebfb994dd94","prId":"CARE-PR-20261125160735-94a339","raw":"30002"}
+{"at":"2026-11-25T16:07:35.280Z","event":"hsp","visitId":1,"step":"status","flowId":"MOCKHSP-251e1572-88c3-41a9-9efb-eebfb994dd94","status":"payment-processing","tx":null,"s":0}
+{"at":"2026-11-25T16:07:38.195Z","event":"request","path":"/api/confirm","visitId":2,"happened":false}
+{"at":"2026-11-25T16:07:42.226Z","event":"confirmed","visitId":2,"happened":false,"status":"Rejected","tx":"0x77526393819826949acf4e1d15b9fd50cb84c75c55594f7ff69a6b9ca2aac345"}
+{"at":"2026-11-25T16:07:42.228Z","event":"http","method":"POST","path":"/api/confirm","code":200,"ms":4033}
+{"at":"2026-11-25T16:07:45.180Z","event":"request","path":"/api/confirm","visitId":3,"happened":true}
+{"at":"2026-11-25T16:07:49.214Z","event":"confirmed","visitId":3,"happened":true,"status":"Confirmed","tx":"0x4359d862c9931161b4cb1b2c85e854ce9808194f16d659706de248e96a1864ea"}
+{"at":"2026-11-25T16:07:49.216Z","event":"pay_queued","visitId":3,"mode":"qa","attempt":1}
+{"at":"2026-11-25T16:07:49.217Z","event":"http","method":"POST","path":"/api/confirm","code":200,"ms":4038}
+{"at":"2026-11-25T16:07:50.376Z","event":"pay_error","visitId":1,"status":"unsettled","kind":"Unsettled","retryable":false,"flowId":"MOCKHSP-251e1572-88c3-41a9-9efb-eebfb994dd94","submitted":true,"error":"HSP payment not settled in 0 min (last status payment-processing): query flow MOCKHSP-251e1572-88c3-41a9-9efb-eebfb994dd94 later; never pay twice","nextTryInMs":null,"s":15}
+{"at":"2026-11-25T16:07:50.383Z","event":"pay_start","visitId":3,"mode":"qa","network":"hashkey-testnet","payTo":"0x58232CF98671Bc0Bd0E7aaA7cd6adE9EdB2E64A6","payer":"0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65","usd":"0.03","won":"45000","rate":"719424","maxRaw":"33993"}
+{"at":"2026-11-25T16:07:50.396Z","event":"hsp","visitId":3,"step":"create_order","flowId":"MOCKHSP-303f9879-cb5b-497c-a587-892f987a9c85","prId":"CARE-PR-20261125160750-4c4de2"}
+{"at":"2026-11-25T16:07:50.401Z","event":"hsp","visitId":3,"step":"firewall_ok","flowId":"MOCKHSP-303f9879-cb5b-497c-a587-892f987a9c85","raw":"30002","maxRaw":"33993","network":"hashkey-testnet","token":"0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6"}
+{"at":"2026-11-25T16:07:50.411Z","event":"hsp","visitId":3,"step":"submitted","flowId":"MOCKHSP-303f9879-cb5b-497c-a587-892f987a9c85","prId":"CARE-PR-20261125160750-4c4de2","raw":"30002"}
+{"at":"2026-11-25T16:07:50.412Z","event":"hsp","visitId":3,"step":"status","flowId":"MOCKHSP-303f9879-cb5b-497c-a587-892f987a9c85","status":"payment-processing","tx":null,"s":0}
+{"at":"2026-11-25T16:07:52.184Z","event":"request","path":"/api/confirm","visitId":4,"happened":true}
+{"at":"2026-11-25T16:07:54.387Z","event":"pay_resume","visitId":1,"flowId":"MOCKHSP-251e1572-88c3-41a9-9efb-eebfb994dd94"}
+{"at":"2026-11-25T16:07:54.403Z","event":"issue_on_chain","visitId":1,"kind":"Unsettled","tx":"0xeb830823c976b5f1e048f549fe9acb06683c4431bb2d37c8459603a2dd98ecbd"}
+{"at":"2026-11-25T16:07:58.448Z","event":"confirmed","visitId":4,"happened":true,"status":"Confirmed","tx":"0x2e3f26ab715beb59816bbac6c87847f04973d34d9878b97d95f5d63d75c3e757"}
+{"at":"2026-11-25T16:07:58.449Z","event":"pay_queued","visitId":4,"mode":"qa","attempt":1}
+{"at":"2026-11-25T16:07:58.450Z","event":"http","method":"POST","path":"/api/confirm","code":200,"ms":6266}
+{"at":"2026-11-25T16:08:01.197Z","event":"request","path":"/api/confirm","visitId":5,"happened":true}
+{"at":"2026-11-25T16:08:05.228Z","event":"confirmed","visitId":5,"happened":true,"status":"Held","tx":"0xa48b2b7196812b24f55be36292bd496b3b96d54db318c205b3ae20237798ab0b"}
+{"at":"2026-11-25T16:08:05.230Z","event":"http","method":"POST","path":"/api/confirm","code":200,"ms":4033}
+{"at":"2026-11-25T16:08:05.512Z","event":"pay_error","visitId":3,"status":"unsettled","kind":"Unsettled","retryable":false,"flowId":"MOCKHSP-303f9879-cb5b-497c-a587-892f987a9c85","submitted":true,"error":"HSP payment not settled in 0 min (last status payment-processing): query flow MOCKHSP-303f9879-cb5b-497c-a587-892f987a9c85 later; never pay twice","nextTryInMs":null,"s":15}
+{"at":"2026-11-25T16:08:05.521Z","event":"hsp","visitId":1,"step":"status","flowId":"MOCKHSP-251e1572-88c3-41a9-9efb-eebfb994dd94","status":"payment-processing","tx":null,"s":0}
+{"at":"2026-11-25T16:08:08.357Z","event":"request","path":"/api/approve","visitId":5}
+{"at":"2026-11-25T16:08:09.524Z","event":"pay_resume","visitId":3,"flowId":"MOCKHSP-303f9879-cb5b-497c-a587-892f987a9c85"}
+{"at":"2026-11-25T16:08:09.539Z","event":"issue_on_chain","visitId":3,"kind":"Unsettled","tx":"0x1f83a7a6e7811ee1a9771c4194f09bd43660b3d2f7fa75469b0301605acb1ecc"}
+{"at":"2026-11-25T16:08:13.580Z","event":"approved","visitId":5,"status":"Confirmed","tx":"0x2328533201b3f4f61289cda0b29e031d75a4a93fccf9aa671a2e51548f3379b4"}
+{"at":"2026-11-25T16:08:13.590Z","event":"pay_queued","visitId":5,"mode":"qa","attempt":1}
+{"at":"2026-11-25T16:08:20.614Z","event":"pay_error","visitId":1,"status":"unsettled","kind":"Unsettled","retryable":false,"flowId":"MOCKHSP-251e1572-88c3-41a9-9efb-eebfb994dd94","submitted":true,"error":"HSP payment not settled in 0 min (last status payment-processing): query flow MOCKHSP-251e1572-88c3-41a9-9efb-eebfb994dd94 later; never pay twice","nextTryInMs":null,"s":26}
+{"at":"2026-11-25T16:08:20.629Z","event":"pay_start","visitId":4,"mode":"qa","network":"hashkey-testnet","payTo":"0x58232CF98671Bc0Bd0E7aaA7cd6adE9EdB2E64A6","payer":"0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65","usd":"0.03","won":"45000","rate":"719424","maxRaw":"33993"}
+{"at":"2026-11-25T16:08:20.639Z","event":"hsp","visitId":4,"step":"create_order","flowId":"MOCKHSP-d7d87b79-d8da-4e2f-8626-d19f749f3c86","prId":"CARE-PR-20261125160820-bbecdd"}
+{"at":"2026-11-25T16:08:20.643Z","event":"hsp","visitId":4,"step":"firewall_ok","flowId":"MOCKHSP-d7d87b79-d8da-4e2f-8626-d19f749f3c86","raw":"30002","maxRaw":"33993","network":"hashkey-testnet","token":"0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6"}
+{"at":"2026-11-25T16:08:20.656Z","event":"hsp","visitId":4,"step":"submitted","flowId":"MOCKHSP-d7d87b79-d8da-4e2f-8626-d19f749f3c86","prId":"CARE-PR-20261125160820-bbecdd","raw":"30002"}
+{"at":"2026-11-25T16:08:20.657Z","event":"hsp","visitId":4,"step":"status","flowId":"MOCKHSP-d7d87b79-d8da-4e2f-8626-d19f749f3c86","status":"payment-processing","tx":null,"s":0}

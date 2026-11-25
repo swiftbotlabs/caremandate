@@ -1,0 +1,3 @@
+visit 1 qa failed RefusedBySigningFirewall MOCKHSP-ab8d8469-d152-47ae-a45c-a13abc21708a None None None attempts 0
+visit 3 qa failed RefusedBySigningFirewall MOCKHSP-ec5a7f93-7960-495a-b99a-6a3741e4e805 None None None attempts 0
+visit 4 qa failed RefusedBySigningFirewall MOCKHSP-0ebd9098-da43-4d7a-921d-9e472ae98975 None None None attempts 0

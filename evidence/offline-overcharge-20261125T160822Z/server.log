@@ -1,0 +1,33 @@
+{"at":"2026-11-25T16:08:33.604Z","event":"start","port":8791,"net":"local","contract":"0xe7f1725e7734ce288f8367e1bb143e90bb3f0512","hspMode":"qa","hspNetwork":"hashkey-testnet","payTo":"0x58232CF98671Bc0Bd0E7aaA7cd6adE9EdB2E64A6","payer":"0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65"}
+caremandate on :8791 local 0xe7f1725e7734ce288f8367e1bb143e90bb3f0512
+{"at":"2026-11-25T16:09:12.196Z","event":"request","path":"/api/confirm","visitId":1,"happened":true}
+{"at":"2026-11-25T16:09:16.271Z","event":"confirmed","visitId":1,"happened":true,"status":"Confirmed","tx":"0x24d94f8e51c443921448d0beaa7a3eb63080269290110942d39015e4f3f6f356"}
+{"at":"2026-11-25T16:09:16.274Z","event":"pay_queued","visitId":1,"mode":"qa","attempt":1}
+{"at":"2026-11-25T16:09:16.276Z","event":"http","method":"POST","path":"/api/confirm","code":200,"ms":4081}
+{"at":"2026-11-25T16:09:16.278Z","event":"pay_start","visitId":1,"mode":"qa","network":"hashkey-testnet","payTo":"0x58232CF98671Bc0Bd0E7aaA7cd6adE9EdB2E64A6","payer":"0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65","usd":"0.03","won":"45000","rate":"719424","maxRaw":"33993"}
+{"at":"2026-11-25T16:09:16.301Z","event":"hsp","visitId":1,"step":"create_order","flowId":"MOCKHSP-ab8d8469-d152-47ae-a45c-a13abc21708a","prId":"CARE-PR-20261125160916-5f344f"}
+{"at":"2026-11-25T16:09:16.304Z","event":"pay_error","visitId":1,"status":"failed","kind":"RefusedBySigningFirewall","retryable":true,"flowId":"MOCKHSP-ab8d8469-d152-47ae-a45c-a13abc21708a","submitted":false,"error":"refused to sign: amount (36002 raw > 31500)","nextTryInMs":null,"s":0}
+{"at":"2026-11-25T16:09:19.237Z","event":"request","path":"/api/confirm","visitId":2,"happened":false}
+{"at":"2026-11-25T16:09:20.327Z","event":"issue_on_chain","visitId":1,"kind":"RefusedBySigningFirewall","tx":"0x3fe7a1d8e8f03c6954387130092d0f8689cd9400d310f6a5418abc311fe4fd0b"}
+{"at":"2026-11-25T16:09:20.376Z","event":"confirmed","visitId":2,"happened":false,"status":"Rejected","tx":"0xfb93b2ae95a77bae275021c0bf4b317f93cdfb976305e078336510e308ceb9d0"}
+{"at":"2026-11-25T16:09:20.377Z","event":"http","method":"POST","path":"/api/confirm","code":200,"ms":1140}
+{"at":"2026-11-25T16:09:23.203Z","event":"request","path":"/api/confirm","visitId":3,"happened":true}
+{"at":"2026-11-25T16:09:27.238Z","event":"confirmed","visitId":3,"happened":true,"status":"Confirmed","tx":"0xc6643524582571151ef0fe2bfbee4f3d73d1db33b274d0e279fc5038034dd0fb"}
+{"at":"2026-11-25T16:09:27.239Z","event":"pay_queued","visitId":3,"mode":"qa","attempt":1}
+{"at":"2026-11-25T16:09:27.241Z","event":"http","method":"POST","path":"/api/confirm","code":200,"ms":4040}
+{"at":"2026-11-25T16:09:27.243Z","event":"pay_start","visitId":3,"mode":"qa","network":"hashkey-testnet","payTo":"0x58232CF98671Bc0Bd0E7aaA7cd6adE9EdB2E64A6","payer":"0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65","usd":"0.03","won":"45000","rate":"719424","maxRaw":"33993"}
+{"at":"2026-11-25T16:09:27.263Z","event":"hsp","visitId":3,"step":"create_order","flowId":"MOCKHSP-ec5a7f93-7960-495a-b99a-6a3741e4e805","prId":"CARE-PR-20261125160927-ba67c3"}
+{"at":"2026-11-25T16:09:27.267Z","event":"pay_error","visitId":3,"status":"failed","kind":"RefusedBySigningFirewall","retryable":true,"flowId":"MOCKHSP-ec5a7f93-7960-495a-b99a-6a3741e4e805","submitted":false,"error":"refused to sign: amount (36002 raw > 31500)","nextTryInMs":null,"s":0}
+{"at":"2026-11-25T16:09:30.217Z","event":"request","path":"/api/confirm","visitId":4,"happened":true}
+{"at":"2026-11-25T16:09:31.279Z","event":"issue_on_chain","visitId":3,"kind":"RefusedBySigningFirewall","tx":"0x05fd99b03db6753391c326bc79db379cba6d3fc41b6ce81026a56e7793b59dd5"}
+{"at":"2026-11-25T16:09:35.315Z","event":"confirmed","visitId":4,"happened":true,"status":"Confirmed","tx":"0x28b5c24c812bc14f991b9656a06c3077d7730d4bc996f881df84c5324fb19905"}
+{"at":"2026-11-25T16:09:35.317Z","event":"pay_queued","visitId":4,"mode":"qa","attempt":1}
+{"at":"2026-11-25T16:09:35.319Z","event":"http","method":"POST","path":"/api/confirm","code":200,"ms":5103}
+{"at":"2026-11-25T16:09:35.320Z","event":"pay_start","visitId":4,"mode":"qa","network":"hashkey-testnet","payTo":"0x58232CF98671Bc0Bd0E7aaA7cd6adE9EdB2E64A6","payer":"0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65","usd":"0.03","won":"45000","rate":"719424","maxRaw":"33993"}
+{"at":"2026-11-25T16:09:35.331Z","event":"hsp","visitId":4,"step":"create_order","flowId":"MOCKHSP-0ebd9098-da43-4d7a-921d-9e472ae98975","prId":"CARE-PR-20261125160935-b543e2"}
+{"at":"2026-11-25T16:09:35.335Z","event":"pay_error","visitId":4,"status":"failed","kind":"RefusedBySigningFirewall","retryable":true,"flowId":"MOCKHSP-0ebd9098-da43-4d7a-921d-9e472ae98975","submitted":false,"error":"refused to sign: amount (36002 raw > 31500)","nextTryInMs":null,"s":0}
+{"at":"2026-11-25T16:09:38.242Z","event":"request","path":"/api/confirm","visitId":5,"happened":true}
+{"at":"2026-11-25T16:09:39.353Z","event":"issue_on_chain","visitId":4,"kind":"RefusedBySigningFirewall","tx":"0x4c06bdf79f77f98271f91aa4d7265580018aa2f89a36db683b4ac2836a4254c1"}
+{"at":"2026-11-25T16:09:39.389Z","event":"confirmed","visitId":5,"happened":true,"status":"Held","tx":"0xe28e93a077d2a5017b1f8da27012dc2feb678c1a4b44a59795a58b1adaad41b4"}
+{"at":"2026-11-25T16:09:39.390Z","event":"http","method":"POST","path":"/api/confirm","code":200,"ms":1148}
+{"at":"2026-11-25T16:09:42.321Z","event":"request","path":"/api/approve","visitId":5}
