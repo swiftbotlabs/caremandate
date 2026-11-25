@@ -154,3 +154,28 @@ test('mcp client: submit_payment and finalize_payment are never retried (control
   assert.deepEqual(await c.tool('get_order', {}), { ok: true });
   assert.equal(fails, 2);
 });
+
+// ---- 2026-11-25: HSK settlement + the mandate's own bound
+const CFG25 = JSON.parse(fs.readFileSync(new URL('live_chain_config_20261125.json', FX))).config;
+test('pickToken: HSP QA (live 2026-11-25) offers hashkey-testnet, chain 133, EIP-3009 USDC 0x8FE3cB71...', () => {
+  const t = pickToken(CFG25, 'hashkey-testnet');
+  assert.equal(t.chainId, 133);
+  assert.equal(t.address, '0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6');
+  assert.equal(t.decimals, 6);
+  assert.equal(t.version, '2');
+  assert.equal(pickToken(CFG25, 'sepolia').chainId, 11155111);
+});
+test('firewall: a quote over the mandate (won price at the on-chain rate + 5%) is refused before signing; at the limit it signs', () => {
+  const token = pickToken(CFG, 'base-sepolia');
+  const base = { payer: payer.address, payTo, token, amountUsd: '0.01', now: NOW };
+  assert.throws(() => firewall(prepFor(), { ...base, maxRaw: 10001n }), (e) => e instanceof Refused && /over the mandate/.test(e.message));   // fixture value 10002
+  assert.equal(firewall(prepFor(), { ...base, maxRaw: 10002n }).message.value, 10002n);
+  assert.equal(firewall(prepFor(), { ...base }).message.value, 10002n);   // control: without the bound the same quote passes
+});
+test('qa flow returns the signed raw amount and token for the on-chain record', async () => {
+  const hsp = fakeHsp();
+  const r = await payVisit({ mode: 'qa', client: hsp, visitId: 7, amountUsd: '0.01', maxRaw: 10500n, payTo, payer: payer.address, now: () => NOW,
+    signTypedData: (td) => payer.signTypedData(td) });
+  assert.equal(r.paidRaw, '10002');
+  assert.equal(r.status, 'payment-safe');
+});

@@ -12,7 +12,8 @@ import crypto from 'node:crypto';
 const QA_URL = process.env.HSP_MCP_URL || 'https://mcp-qa.hashkeymerchant.com/';
 export const MERCHANT = process.env.HSP_MERCHANT_NAME || 'Swift Bot Labs (CareMandate)';
 // HSP payment testing for this event settles in Circle USDC on Ethereum Sepolia (organizer, 2026-11-22; faucet.circle.com).
-// HSP's chain config also lists base-sepolia and arbitrum-sepolia; HSP_NETWORK selects another one.
+// HSP's live chain config (tools/list + get_chain_config read 2026-11-25) also offers hashkey-testnet (chain 133) with EIP-3009 USDC
+// 0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6: HSP_NETWORK=hashkey-testnet settles on HSK Chain itself (the payer must hold that USDC).
 const network = () => process.env.HSP_NETWORK || 'sepolia';
 const PER_PAYMENT_CAP_USD = Number(process.env.HSP_CAP_USD || 0.05);
 const FEE_ALLOWANCE = 1.05;                                  // HSP converts USD at a live rate (0.01 USD -> 10002 raw seen live)
@@ -133,7 +134,7 @@ export function cart({ token, payTo, amountUsd, visitId, now = Date.now() }) {
 }
 
 // ---------------------------------------------------------------- the signing firewall: the EIP-712 HSP hands us must be exactly our order
-export function firewall(prepIn, { payer, payTo, token, amountUsd, now = Date.now() }) {
+export function firewall(prepIn, { payer, payTo, token, amountUsd, maxRaw = null, now = Date.now() }) {
   const prep = holder(prepIn, 'eip712');
   const td = prep.eip712;
   if (!td || td.primaryType !== 'TransferWithAuthorization') throw new Refused('primaryType', td?.primaryType);
@@ -147,6 +148,8 @@ export function firewall(prepIn, { payer, payTo, token, amountUsd, now = Date.no
   if (!(usd > 0) || usd > PER_PAYMENT_CAP_USD) throw new Refused('per-payment cap', String(amountUsd));
   const bound = BigInt(Math.ceil(usd * 10 ** token.decimals * FEE_ALLOWANCE));
   if (raw <= 0n || raw > bound) throw new Refused('amount', `${raw} raw > ${bound}`);
+  // the mandate's own limit: the visit's won price at the on-chain rate + 5% (CareMandate.markPaid enforces the same bound)
+  if (maxRaw != null && raw > BigInt(maxRaw)) throw new Refused('over the mandate (won price at the mandate rate + 5%)', `${raw} raw > ${maxRaw}`);
   const vb = Number(m.validBefore), va = Number(m.validAfter || 0);
   if (!(vb > now / 1000) || vb - now / 1000 > 2 * 3600 || va > now / 1000) throw new Refused('validity window', `${va}..${vb}`);
   if (!/^0x[0-9a-f]{64}$/i.test(String(m.nonce))) throw new Refused('nonce');
@@ -180,10 +183,10 @@ export async function waitSettled({ hsp = mcpClient(), flowId, prId, network = n
 const network_ = () => network();
 
 /** Pay one visit. amountUsd like "0.01". Returns {mode, flowId, paymentRequestId, txHash, status, network, attributionVerified}. */
-export async function payVisit({ mode = process.env.HSP_MODE || 'mock', visitId, amountUsd, payTo, payer, signTypedData, client, log = () => {}, now = Date.now }) {
+export async function payVisit({ mode = process.env.HSP_MODE || 'mock', visitId, amountUsd, maxRaw = null, payTo, payer, signTypedData, client, log = () => {}, now = Date.now }) {
   if (mode === 'mock') {
     const flowId = 'MOCK-' + crypto.randomUUID();
-    return { mode, flowId, paymentRequestId: `MOCK-PR-${visitId}`, txHash: null, status: 'mock-settled' };
+    return { mode, flowId, paymentRequestId: `MOCK-PR-${visitId}`, txHash: null, status: 'mock-settled', paidRaw: String(Math.round(Number(amountUsd) * 1e6)) };
   }
   if (mode !== 'qa') throw new Error('HSP_MODE must be qa or mock');
   const hsp = client || mcpClient();
@@ -198,9 +201,10 @@ export async function payVisit({ mode = process.env.HSP_MODE || 'mock', visitId,
   if (got.merchant_name !== MERCHANT || (got.payment_request_id && got.payment_request_id !== prId)) throw new Refused('get_order is not our order', got.merchant_name);
   for (let attempt = 1; attempt <= 3; attempt++) {
     const prep = await hsp.tool('prepare_payment', { flow_id: flowId, payer, protocol: 'eip3009' });
-    const typed = firewall(prep, { payer, payTo, token, amountUsd, now: now() });   // throws Refused: nothing is signed
+    const typed = firewall(prep, { payer, payTo, token, amountUsd, maxRaw, now: now() });   // throws Refused: nothing is signed
     const p = holder(prep, 'eip712');
-    log({ step: 'firewall_ok', flowId, raw: String(typed.message.value) });
+    const paidRaw = String(typed.message.value);
+    log({ step: 'firewall_ok', flowId, raw: paidRaw, maxRaw: maxRaw == null ? null : String(maxRaw), network: token.network, token: token.address });
     const signature = await signTypedData(typed);
     let fin;
     try {
@@ -213,8 +217,8 @@ export async function payVisit({ mode = process.env.HSP_MODE || 'mock', visitId,
       if (/quote|expired/i.test(e.message) && attempt < 3) continue;
       if (!(e instanceof HspError) || e.code === 403) throw e;   // a gateway answer: fall through to one query, never resubmit
     }
-    log({ step: 'submitted', flowId, prId });
-    return await waitSettled({ hsp, flowId, prId, network: token.network, mode, log, now });
+    log({ step: 'submitted', flowId, prId, raw: paidRaw });
+    return { ...(await waitSettled({ hsp, flowId, prId, network: token.network, mode, log, now })), paidRaw, token: token.address, chainId: token.chainId };
   }
   throw new HspError('quote kept expiring');
 }

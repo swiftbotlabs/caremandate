@@ -9,9 +9,10 @@ const RPC_OPTS = { timeout: 30_000, retryCount: 5, retryDelay: 1_000 };
 export const STATUS = ['None', 'Posted', 'Confirmed', 'Held', 'Paid', 'Rejected'];
 
 export const CHAINS = {
-  local: { id: 31337, name: 'anvil', rpc: 'http://127.0.0.1:8545', explorer: null },
+  // the offline runs start anvil with --chain-id 133 (CM_LOCAL_CHAIN_ID) so the local chain is a faithful HSK-testnet stand-in
+  local: { id: Number(process.env.CM_LOCAL_CHAIN_ID || 31337), name: 'anvil', rpc: process.env.CM_LOCAL_RPC || 'http://127.0.0.1:8545', explorer: null },
   testnet: { id: 133, name: 'HashKey Chain Testnet', rpc: 'https://testnet.hsk.xyz', explorer: 'https://testnet-explorer.hsk.xyz' },
-  mainnet: { id: 177, name: 'HashKey Chain', rpc: 'https://mainnet.hsk.xyz', explorer: 'https://hsk.blockscout.com' },
+  mainnet: { id: 177, name: 'HashKey Chain', rpc: process.env.CM_MAINNET_RPC || 'https://mainnet.hsk.xyz', explorer: 'https://hsk.blockscout.com' },   // CM_MAINNET_RPC: fork tests only
 };
 
 export function connect(net = process.env.CM_NET || 'local') {
@@ -37,9 +38,17 @@ export async function visit(ctx, address, id) {
 }
 
 export async function mandate(ctx, address, id) {
-  const [family, familyAgent, agency, confirmer, perVisitCap, weeklyMax, active] = await ctx.pub.readContract({ address, abi: ABI, functionName: 'mandates', args: [BigInt(id)] });
-  return { id: Number(id), family, familyAgent, agency, confirmer, perVisitCap, weeklyMax: Number(weeklyMax), active };
+  const [family, familyAgent, agency, confirmer, perVisitCap, weeklyMax, active, rawPerMillionWon] = await ctx.pub.readContract({ address, abi: ABI, functionName: 'mandates', args: [BigInt(id)] });
+  return { id: Number(id), family, familyAgent, agency, confirmer, perVisitCap, weeklyMax: Number(weeklyMax), active, rawPerMillionWon };
 }
+
+/** What was paid for a visit (v2): paidRaw, settlementTx, issues (failed/unsettled attempts recorded), agencyAck. */
+export async function payment(ctx, address, id) {
+  const [paidRaw, settlementTx, issues, agencyAck] = await ctx.pub.readContract({ address, abi: ABI, functionName: 'payments', args: [BigInt(id)] });
+  return { paidRaw, settlementTx, issues: Number(issues), agencyAck };
+}
+
+export const ISSUE = { FailedBeforeSubmit: 1, HspPaymentFailed: 2, Unsettled: 3, RefusedBySigningFirewall: 4 };
 
 /** Canonical receipt hash: keys sorted, no whitespace, so the agency, the family and Mum's page all hash the same bytes. */
 export function receiptHash(receipt) {

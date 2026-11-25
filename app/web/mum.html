@@ -51,7 +51,9 @@ async function tick() {
     const v = vs.find((y) => y.id === id), p = v?.payment || {};
     const line = document.createElement('p');
     if (v?.status === 'Paid') { line.className = 'pay-ok'; line.textContent = `The ${x.when} visit is paid. Thank you, ${x.carer}.`; }
-    else if (p.status === 'failed' || p.status === 'unsettled') { line.className = 'pay-warn'; line.textContent = `The ${x.when} payment has not gone through yet. Mina has been told.`; }
+    else if (p.status === 'retrying') { open++; line.className = 'pay-warn'; line.textContent = `The ${x.when} payment did not go through. No money moved; trying again in a moment. Mina has been told.`; }
+    else if (p.status === 'unsettled') { open++; line.className = 'pay-warn'; line.textContent = `The ${x.when} payment is still being checked. It will never be paid twice. Mina has been told.`; }
+    else if (p.status === 'failed') { line.className = 'pay-warn'; line.textContent = `The ${x.when} visit is confirmed but not paid yet. Mina has been told and can try again.`; }
     else { open++; line.className = 'pay-wait'; line.textContent = `Paying ${x.carer} for the ${x.when} visit via HSP… this takes about 3 minutes.`; }
     box.appendChild(line);
   }

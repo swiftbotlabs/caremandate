@@ -10,20 +10,37 @@
 <script type="module">
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const day = (t) => new Date(t * 1000).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Seoul' });
+const NOTE = { RefusedBySigningFirewall: 'your agent refused to sign: HSP asked for more than the mandate', FailedBeforeSubmit: 'did not reach HSP', HspPaymentFailed: 'HSP: payment failed, no money moved', Unsettled: 'HSP has not confirmed it yet; checked again, never paid twice' };
+function payLine(v, ex) {
+  const p = v.payment, o = v.onchain || {};
+  if (!p) return '';
+  if (p.mode === 'mock') return '<div class="small">HSP MOCK (test run)</div>';
+  const st = p.hspStatus && p.status === 'paying' ? p.hspStatus : p.status;
+  let t = 'HSP ' + esc(st) + (p.flowId ? ' · flow …' + esc(String(p.flowId).slice(-12)) : '');
+  if (v.status === 'Paid' && o.paidRaw && o.paidRaw !== '0') t += ` · $${(Number(o.paidRaw) / 1e6).toFixed(2)} test USDC`;
+  if (ex && p.markPaidTx) t += ` · <a href="${esc(ex)}/tx/${esc(p.markPaidTx)}" target="_blank" rel="noopener">on chain</a>`;
+  if (o.agencyAck) t += ' · <b class="ack">agency confirmed receipt</b>';
+  else if (v.status === 'Paid' && o.settlementTx && !/^0x0+$/.test(o.settlementTx)) t += ' · agency checking…';
+  if (v.status === 'Confirmed' && ['failed', 'retrying', 'unsettled'].includes(p.status)) t += `<div class="small warn">Confirmed, not paid yet: ${esc(NOTE[p.kind] || p.error || '')}${p.status === 'retrying' ? '. Trying again automatically.' : ''}${o.issues ? ` (${o.issues} attempt${o.issues > 1 ? 's' : ''} recorded on chain)` : ''}</div>`;
+  if ((p.attempts || []).length && v.status === 'Paid') t += `<div class="small">Paid on attempt ${p.attempts.length + 1}; the earlier one moved no money.</div>`;
+  return `<div class="small">${t}</div>`;
+}
 const LABEL = { Paid: 'paid', Rejected: 'did not happen', Held: 'waits for you', Posted: 'waiting for Mum', Confirmed: 'paying…' };
 async function load() {
   const [cfg, vs, ms] = await Promise.all(['/api/config', '/api/visits', '/api/messages'].map((u) => fetch(u).then((r) => r.json())));
-  document.getElementById('rules').textContent = `Your rules: at most ${cfg.weeklyMax} visits a week, at most ${Number(cfg.perVisitCap).toLocaleString('en-US')} won a visit. Only visits Mum confirms are paid.`;
+  const fx = cfg.fx ? ` Paid in test USDC at ${Number(cfg.fx.krwPerUsd).toLocaleString('en-US')} won per dollar (${cfg.fx.source}, ${cfg.fx.date})${cfg.fx.scale > 1 ? `, testnet scale 1:${cfg.fx.scale}` : ''}: ${Number(cfg.perVisitCap).toLocaleString('en-US')} won = $${cfg.capUsd}.` : '';
+  document.getElementById('rules').textContent = `Your rules: at most ${cfg.weeklyMax} visits a week, at most ${Number(cfg.perVisitCap).toLocaleString('en-US')} won a visit. Only visits Mum confirms are paid.${fx}`;
   document.getElementById('sPaid').textContent = vs.filter((v) => v.status === 'Paid').length;
   document.getElementById('sWait').textContent = vs.filter((v) => ['Posted', 'Held', 'Confirmed'].includes(v.status)).length;
   document.getElementById('sNo').textContent = vs.filter((v) => v.status === 'Rejected').length;
   document.getElementById('msgs').innerHTML = ms.length ? ms.slice(0, 6).map((m) => `<div class="msg"><time>${esc(new Date(m.at).toLocaleString('en-GB', { timeZone: 'Asia/Seoul' }))}</time>${esc(m.text)}</div>`).join('') : '<p class="small">Nothing yet.</p>';
   const ex = cfg.explorer;
   document.getElementById('visits').innerHTML = vs.slice().reverse().map((v) => `<div class="row"><div><b>${esc(day(v.visitTime))}</b> · ${esc(v.receipt?.carer || 'carer')} · ${Number(v.amount).toLocaleString('en-US')} won
-    ${v.payment ? `<div class="small">${v.payment.mode === 'mock' ? 'HSP MOCK (test run)' : 'HSP ' + esc(v.payment.hspStatus && v.payment.status === 'paying' ? v.payment.hspStatus : v.payment.status) + (v.payment.flowId ? ' · flow …' + esc(String(v.payment.flowId).slice(-12)) : '')}${ex && v.payment.markPaidTx ? ` · <a href="${esc(ex)}/tx/${esc(v.payment.markPaidTx)}" target="_blank" rel="noopener">on chain</a>` : ''}</div>` : ''}</div>
-    <div>${v.status === 'Held' ? `<button class="approve" data-v="${v.id}">Approve</button>` : `<span class="pill ${esc(v.status)}">${esc(v.status === 'Confirmed' && ['failed', 'unsettled'].includes(v.payment?.status) ? 'payment not through yet' : (LABEL[v.status] || v.status))}</span>`}</div></div>`).join('') || '<p class="small">No visits yet.</p>';
+    ${v.price?.usd ? `<span class="small"> = $${esc(v.price.usd)}</span>` : ''}${payLine(v, ex)}</div>
+    <div>${v.status === 'Held' ? `<button class="approve" data-v="${v.id}">Approve</button>` : v.status === 'Confirmed' && v.payment?.status === 'failed' && v.payment?.retryable ? `<button class="retry" data-v="${v.id}">Try payment again</button>` : `<span class="pill ${esc(v.status)}">${esc(v.status === 'Confirmed' && ['failed', 'unsettled', 'retrying'].includes(v.payment?.status) ? 'confirmed, not paid yet' : (LABEL[v.status] || v.status))}</span>`}</div></div>`).join('') || '<p class="small">No visits yet.</p>';
   document.querySelectorAll('.approve').forEach((b) => b.onclick = async () => { b.disabled = true; await fetch('/api/approve', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ visitId: +b.dataset.v }) }); load(); });
-  document.getElementById('chain').innerHTML = `Rules and every visit are on ${esc(cfg.network)}: contract ${ex ? `<a href="${esc(ex)}/address/${esc(cfg.contract)}" target="_blank" rel="noopener"><code>${esc(cfg.contract)}</code></a>` : `<code>${esc(cfg.contract)}</code>`}. Payments: HSP ${cfg.hspMode === 'mock' ? 'MOCK (test run, no money moves)' : 'QA'}.`;
+  document.querySelectorAll('.retry').forEach((b) => b.onclick = async () => { b.disabled = true; await fetch('/api/retry', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ visitId: +b.dataset.v }) }); load(); });
+  document.getElementById('chain').innerHTML = `Rules and every visit are on ${esc(cfg.network)}: contract ${ex ? `<a href="${esc(ex)}/address/${esc(cfg.contract)}" target="_blank" rel="noopener"><code>${esc(cfg.contract)}</code></a>` : `<code>${esc(cfg.contract)}</code>`}. Payments: HSP ${cfg.hspMode === 'mock' ? 'MOCK (test run, no money moves)' : 'QA, settling on ' + esc(cfg.hspNetwork)}.`;
 }
 load(); setInterval(load, 4000);
 </script></body></html>

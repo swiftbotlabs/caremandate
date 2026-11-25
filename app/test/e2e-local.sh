@@ -10,7 +10,7 @@ export CM_NET=local DEPLOYER_PK=${K[0]} FAMILY_PK=${K[1]} FAMILY_AGENT_PK=${K[2]
 export FAMILY_AGENT_ADDR=$(cast wallet address --private-key ${K[2]}) AGENCY_ADDR=$(cast wallet address --private-key ${K[3]})
 MUMPK=0x$(openssl rand -hex 32); MUM=$(cast wallet address --private-key $MUMPK)
 export CM_STATE=$TMPDIR/cm-e2e-state.json; rm -f $CM_STATE
-OUT=$(node setup.mjs $MUM 45000 3); echo "$OUT"
+OUT=$(KRW_PER_USD=1390 FX_SOURCE="fixed test rate (local run)" node setup.mjs $MUM 45000 3); echo "$OUT"
 export CM_CONTRACT=$(echo "$OUT" | python3 -c "import json,sys;print(json.load(sys.stdin)['contract'])") CM_MANDATE=1 HSP_MODE=mock PORT=8791
 node server.mjs & SV=$!; sleep 1.5
 NOW=$(cast block latest -f timestamp --rpc-url http://127.0.0.1:8545)

@@ -1,12 +1,16 @@
 // Builds the public, read-only record page of one testnet run (demo/index.html + live.js + style.css + shots).
 // Every value on the page comes from the run's own files AND is re-checked on chain first (HSK Chain testnet reads,
-// Ethereum Sepolia receipts). Any mismatch -> exit 1 and no page. The page holds no keys and cannot pay: it is static
+// receipts on HSP's settlement network: HSK Chain testnet when the run used HSP_NETWORK=hashkey-testnet, else Ethereum Sepolia).
+// v2 runs (setup.json has fx) also check: the mandate's on-chain won->USDC rate, payments(id).paidRaw = the settlement transfer
+// <= the mandate limit, the agency's own AgencyAck per paid visit (agency-watch.log), the over-cap visit refused (re-simulated
+// live against the contract), and list the offline failure-mode gates (DEMO_OFFLINE_GATES=<gate.json,...>). Any mismatch -> exit 1. The page holds no keys and cannot pay: it is static
 // HTML; the optional live.js only makes eth_call reads of visits(id).
 // Usage: node demo-page.mjs <runDir> <outDir>     (env DEMO_TAMPER=1 flips one flow id: the gate must then fail)
 import fs from 'node:fs';
 import path from 'node:path';
 import { createPublicClient, http, keccak256, toBytes, toFunctionSelector, parseAbiItem, decodeEventLog } from 'viem';
-import { connect, visit, mandate, CHAINS } from './lib/chain.mjs';
+import { connect, visit, mandate, payment, CHAINS, ABI } from './lib/chain.mjs';
+import { maxPayRaw, recordLimitRaw, usdFor } from './lib/fx.mjs';
 
 const [runDir, outDir] = process.argv.slice(2);
 if (!runDir || !outDir) { console.error('usage: node demo-page.mjs <runDir> <outDir>'); process.exit(2); }
@@ -15,7 +19,10 @@ const MAX = 2_000_000;
 for (const f of ['payments.txt', 'server.log', 'agency.log', 'setup.json', 'state.json']) {
   if (fs.statSync(path.join(runDir, f)).size > MAX) throw new Error(`${f} too large`);
 }
-const HEX32 = /^0x[0-9a-f]{64}$/i, ADDR = /^0x[0-9a-f]{40}$/i, UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+for (const f of ['agency-watch.log', 'captrip.json']) if (fs.existsSync(path.join(runDir, f)) && fs.statSync(path.join(runDir, f)).size > MAX) throw new Error(`${f} too large`);
+const HEX32 = /^0x[0-9a-f]{64}$/i, ADDR = /^0x[0-9a-f]{40}$/i;
+// real HSP flow ids are UUIDs; the offline stand-in's MOCKHSP-<uuid> is accepted only when building from a local (offline) run
+const UUID = process.env.DEMO_NET === 'local' ? /^(MOCKHSP-)?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i : /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const must = (ok, msg) => { if (!ok) { console.error('GATE FAIL: ' + msg); process.exit(1); } };
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const jl = (txt) => txt.split('\n').filter((l) => l.startsWith('{')).map((l) => JSON.parse(l));
@@ -26,7 +33,16 @@ const state = JSON.parse(R('state.json'));
 const server = jl(R('server.log'));
 const agency = jl(R('agency.log'));
 const start = server.find((e) => e.event === 'start');
-must(start && start.net === 'testnet' && start.hspMode === 'qa', 'server.log start line: testnet + qa');
+const NET = process.env.DEMO_NET || 'testnet';   // DEMO_NET=local only to test this builder on an offline run
+must(start && start.net === NET && start.hspMode === 'qa', `server.log start line: ${NET} + qa`);
+const V2 = !!setup.fx;
+const HSPNET = start.hspNetwork || 'sepolia';
+const SETTLE = {
+  sepolia: { label: 'Ethereum Sepolia', rpc: 'https://ethereum-sepolia-rpc.publicnode.com', token: '0x1c7d4b196cb0c7b01d743fbc6116a902379c7238', ex: 'https://sepolia.etherscan.io' },
+  'hashkey-testnet': { label: 'HSK Chain testnet', rpc: CHAINS.testnet.rpc, token: '0x8fe3cb719ee4410e236cd6b72ab1fcdc06ef53c6', ex: CHAINS.testnet.explorer },
+}[HSPNET];
+must(SETTLE, `known HSP network ${HSPNET}`);
+if (process.env.DEMO_SETTLE_RPC) SETTLE.rpc = process.env.DEMO_SETTLE_RPC;   // offline builder test only
 const CONTRACT = setup.contract;
 must(ADDR.test(CONTRACT) && CONTRACT.toLowerCase() === start.contract.toLowerCase(), 'contract matches server start');
 const DEPLOY_TX = process.env.DEMO_DEPLOY_TX || '';
@@ -48,9 +64,9 @@ must(visits.length >= 1, '0 visits in agency.log');
 if (process.env.DEMO_TAMPER === '1') { const v = visits.find((x) => x.p); const f = '00000000-0000-4000-8000-000000000000'; v.p = { ...v.p, flowId: f }; v.paid = { ...v.paid, flowId: f }; }
 
 // ---- re-check everything on chain
-const hsk = connect('testnet');
-const sep = createPublicClient({ transport: http('https://ethereum-sepolia-rpc.publicnode.com', { timeout: 30_000, retryCount: 4, retryDelay: 1_500 }) });
-const SEPOLIA_USDC = '0x1c7d4b196cb0c7b01d743fbc6116a902379c7238';
+const hsk = connect(NET);
+const sep = createPublicClient({ transport: http(SETTLE.rpc, { timeout: 30_000, retryCount: 4, retryDelay: 1_500 }) });
+const SEPOLIA_USDC = SETTLE.token;   // the settlement token (name kept from v1)
 const TRANSFER = parseAbiItem('event Transfer(address indexed from, address indexed to, uint256 value)');
 let checks = 0;
 async function okTx(client, hash, label) {
@@ -67,6 +83,25 @@ async function usdcTransfer(hash, label) {
   checks++; return t[0].value;
 }
 const m = await mandate(hsk, CONTRACT, setup.mandateId);
+const acks = V2 ? R('agency-watch.log').split('\n').filter((l) => l.startsWith('{')).map((l) => JSON.parse(l)).filter((x) => x.event === 'ack') : [];
+let trip = null, gates = [];
+if (V2) {
+  must(String(m.rawPerMillionWon) === setup.fx.rawPerMillionWon && usdFor(m.perVisitCap, m.rawPerMillionWon) === setup.fx.capUsd, 'mandate rate on chain = setup fx');
+  checks++;
+  trip = JSON.parse(R('captrip.json'));
+  must(trip.refused === true && trip.reason === 'BadInput' && trip.amountWon > Number(m.perVisitCap), 'cap trip refused (BadInput) in the run');
+  // re-run the refusal now, read-only: the agency posting the same over-cap price must still revert
+  let rev = null;
+  try { await hsk.pub.simulateContract({ address: CONTRACT, abi: ABI, functionName: 'postVisit', args: [BigInt(setup.mandateId), BigInt((await hsk.pub.getBlock()).timestamp - 60n), BigInt(trip.amountWon), keccak256(toBytes('demo-page cap check ' + Date.now()))], account: m.agency }); }
+  catch (e) { rev = typeof e.walk === 'function' ? e.walk((x) => x?.data?.errorName)?.data?.errorName : null; }
+  must(rev === 'BadInput', `over-cap post re-simulated now: reverts BadInput (got ${rev})`);
+  checks++;
+  for (const g of (process.env.DEMO_OFFLINE_GATES || '').split(',').filter(Boolean)) {
+    const j = JSON.parse(fs.readFileSync(g, 'utf8'));
+    must(j.failed === 0 && j.checks >= 8, `offline gate ${j.scenario}: PASS`);
+    gates.push(j);
+  }
+}
 await okTx(hsk.pub, setup.tx, 'mandate tx');
 if (DEPLOY_TX) { const d = await okTx(hsk.pub, DEPLOY_TX, 'deploy tx'); must((d.contractAddress || '').toLowerCase() === CONTRACT.toLowerCase(), 'deploy tx created the contract'); }
 for (const v of visits) {
@@ -85,7 +120,17 @@ for (const v of visits) {
     must(on.paymentRef.toLowerCase() === keccak256(toBytes(v.p.flowId)).toLowerCase(), `visit ${v.id}: on-chain paymentRef = keccak256(HSP flow id)`);
     checks++;
     await okTx(hsk.pub, v.p.markPaidTx, `visit ${v.id} markPaid`);
-    v.usdc = await usdcTransfer(v.p.txHash, `visit ${v.id} Sepolia`);
+    v.usdc = await usdcTransfer(v.p.txHash, `visit ${v.id} ${SETTLE.label}`);
+    if (V2) {
+      const oc = await payment(hsk, CONTRACT, v.id); v.oc = oc;
+      must(oc.paidRaw === v.usdc && oc.settlementTx.toLowerCase() === v.p.txHash.toLowerCase(), `visit ${v.id}: payments(id) on chain = the settlement transfer`);
+      must(oc.paidRaw <= recordLimitRaw(on.amount, m.rawPerMillionWon), `visit ${v.id}: paid within the mandate (won x rate + 5%)`);
+      must(oc.agencyAck === true, `visit ${v.id}: the agency acknowledged on chain`);
+      v.ack = acks.find((a) => a.visitId === v.id);
+      must(v.ack, `visit ${v.id}: ack line in agency-watch.log`);
+      await okTx(hsk.pub, v.ack.ackTx, `visit ${v.id} agency ack`);
+      checks += 3;
+    }
   } else {
     must(on.status === 'Rejected' && !v.p, `visit ${v.id}: Rejected on chain and never paid`);
     must(/^0x0{64}$/.test(on.paymentRef), `visit ${v.id}: no payment reference`);
@@ -97,7 +142,7 @@ must(checks >= visits.length * 3, `too few checks (${checks})`);
 console.log(`chain checks passed: ${checks} (visits ${visits.length}, paid ${visits.filter((v) => v.p).length})`);
 
 // ---- render
-const EX = CHAINS.testnet.explorer, SEP = 'https://sepolia.etherscan.io';
+const EX = CHAINS.testnet.explorer, SEP = SETTLE.ex;
 const hx = (h, n = 8) => `${h.slice(0, n)}…${h.slice(-6)}`;
 const txl = (h, base = EX) => `<a href="${base}/tx/${esc(h)}" rel="noopener">${esc(hx(h))}</a>`;
 const fmt = (d, opt) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Seoul', ...opt }).format(d);
@@ -110,6 +155,7 @@ const secs = (a, b) => Math.round((new Date(b) - new Date(a)) / 1000);
 const paidN = visits.filter((v) => v.p).length, noN = visits.filter((v) => !v.conf.happened).length, heldN = visits.filter((v) => v.appr).length;
 const runStart = start.at, runEnd = server.filter((e) => e.event === 'paid').map((e) => e.at).sort().pop();
 const sel = toFunctionSelector('visits(uint256)');
+const FILM_OTHER = process.env.DEMO_FILM_RUN && process.env.DEMO_FILM_RUN !== path.basename(path.resolve(runDir)) ? process.env.DEMO_FILM_RUN : '';
 
 const card = (v) => {
   const yes = v.conf.happened;
@@ -121,8 +167,9 @@ const card = (v) => {
   if (v.appr) rows.push(['4th visit this week: held', `Mina approved · ${txl(v.appr.tx)}<span class="h">${kst(v.appr.at)} KST</span>`]);
   if (yes) {
     rows.push(['HSP Agentic Payment', `<b class="ok">payment-safe</b>, ${secs(v.ps.at, v.p.settledAt)} s after the order was created<span class="h">flow <code>${esc(v.p.flowId)}</code></span><span class="h">request <code>${esc(v.p.paymentRequestId)}</code></span>`]);
-    rows.push(['Money moved (Ethereum Sepolia)', `${usd(v.usdc)} test USDC · ${txl(v.p.txHash, SEP)}`]);
+    rows.push([`Money moved (${SETTLE.label})`, `${usd(v.usdc)} test USDC · ${txl(v.p.txHash, SEP)}${V2 ? `<span class="h">${esc(won(v.rc.amountWon))} at the mandate rate = at most ${usd(maxPayRaw(v.rc.amountWon, m.rawPerMillionWon))}; asked HSP for $${esc(usdFor(v.rc.amountWon, m.rawPerMillionWon))}</span>` : ''}`]);
     rows.push(['Paid, recorded on HSK Chain', `markPaid · ${txl(v.p.markPaidTx)}<span class="h">paymentRef = keccak256(flow id) = <code>${esc(hx(v.on.paymentRef, 10))}</code></span>`]);
+    if (v.ack) rows.push(["Agency's agent confirms receipt", `ackPaid · ${txl(v.ack.ackTx)}<span class="h">after checking the ${esc(SETTLE.label)} transfer itself; ${kst(v.ack.at)} KST</span>`]);
   } else {
     rows.push(['Payment', '<b class="no">none</b><span class="h">The contract marks the visit Rejected; it can never be paid.</span>']);
   }
@@ -151,16 +198,18 @@ const html = `<!doctype html>
 <h1>Pay mum's carer only for the visits that happened.</h1>
 <p class="sub">Mina works in Seoul. Her mother lives in Busan, and a carer visits her. Mum answers one question after each visit, and Mina's agent pays the agency's agent through HSP only for the visits Mum confirms.</p>
 
-<section class="card note"><p><b>This page is the record of one real run.</b> ${esc(fmt(new Date(runStart), { day: 'numeric', month: 'short', year: 'numeric' }))}, ${kst(runStart)} to ${kst(runEnd)} KST, on <b>HSK Chain testnet</b> with <b>real HSP QA payments</b> (HSP's QA environment settles in Circle test USDC on Ethereum Sepolia). It is read-only: it holds no keys and cannot pay anyone.</p></section>
+<section class="card note"><p><b>This page is the record of one real run.</b> ${esc(fmt(new Date(runStart), { day: 'numeric', month: 'short', year: 'numeric' }))}, ${kst(runStart)} to ${kst(runEnd)} KST, on <b>HSK Chain testnet</b> with <b>real HSP QA payments</b> (HSP's QA environment settles in test USDC on ${esc(SETTLE.label)}). It is read-only: it holds no keys and cannot pay anyone.</p></section>
 
-<section class="card"><h2>The run in 71 seconds</h2><video controls preload="none" playsinline width="1920" height="1080" poster="poster.jpg" src="caremandate-demo.mp4"></video><p class="small">Captions only, no sound. <a href="caremandate-demo.mp4">Open the video file</a>.</p></section>
+${FILM_OTHER ? `<section class="card"><h2>The first testnet run, filmed (71 s)</h2>` : `<section class="card"><h2>The run in 71 seconds</h2>`}<video controls preload="none" playsinline width="1920" height="1080" poster="poster.jpg" src="caremandate-demo.mp4"></video><p class="small">Captions only, no sound. ${FILM_OTHER ? `Filmed on an earlier run (<code>${esc(FILM_OTHER)}</code>, before the payment-record, cap and agency-receipt features); the record below is of this run. ` : ''}<a href="caremandate-demo.mp4">Open the video file</a>.</p></section>
 
 <section class="card stat" aria-label="Run summary"><div><b>${visits.length}</b>visits</div><div><b>${paidN}</b>paid via HSP</div><div><b>${noN}</b>not paid</div><div><b>${heldN}</b>held for Mina</div></section>
 
 <section class="card"><h2>Mina's rules, on chain</h2>
 <dl><div><dt>Contract (HSK Chain testnet)</dt><dd><a href="${EX}/address/${CONTRACT}" rel="noopener"><code>${CONTRACT}</code></a></dd></div>
 ${DEPLOY_TX ? `<div><dt>Deployed</dt><dd>${txl(DEPLOY_TX)}</dd></div>` : ''}
-<div><dt>Mandate ${setup.mandateId}</dt><dd>${txl(setup.tx)}<span class="h">at most ${m.weeklyMax} visits a week, at most ${esc(won(m.perVisitCap))} a visit; only the agency <code>${esc(hx(m.agency, 6))}</code> can be paid; only Mum's tablet key <code>${esc(hx(m.confirmer, 6))}</code> can confirm</span></dd></div></dl>
+<div><dt>Mandate ${setup.mandateId}</dt><dd>${txl(setup.tx)}<span class="h">at most ${m.weeklyMax} visits a week, at most ${esc(won(m.perVisitCap))} a visit; only the agency <code>${esc(hx(m.agency, 6))}</code> can be paid; only Mum's tablet key <code>${esc(hx(m.confirmer, 6))}</code> can confirm</span></dd></div>
+${V2 ? `<div><dt>Won to test USDC, on chain</dt><dd>${esc(String(m.rawPerMillionWon))} USDC units per 1,000,000 won<span class="h">${esc(String(setup.fx.krwPerUsd))} won per dollar (${esc(setup.fx.source)}, ${esc(setup.fx.date)}), testnet scale 1:${esc(String(setup.fx.scale))}: ${esc(won(m.perVisitCap))} = $${esc(setup.fx.capUsd)} test USDC (at full scale $${esc(usdFor(m.perVisitCap, m.rawPerMillionWon * BigInt(setup.fx.scale)))}). The contract refuses to record a payment above a visit's won price at this rate + 5%.</span></dd></div>
+<div><dt>Over the cap: refused</dt><dd><b class="no">${esc(won(trip.amountWon))} visit refused</b> by the contract (<code>${esc(trip.reason)}</code>); it never became a visit<span class="h">Re-checked when this page was built: the agency posting ${esc(won(trip.amountWon))} to this contract still reverts.</span></dd></div>` : ''}</dl>
 <p class="small">The contract holds no money: HSP moves it. The contract decides what may be paid, and records each HSP payment against its visit.</p></section>
 
 <h2 class="sec">Every visit</h2>
@@ -171,14 +220,17 @@ ${visits.map(card).join('\n')}
 
 ${PROBE ? `<section class="card"><h2>First real HSP payment</h2><p>Before the full run, one standalone HSP QA payment: flow <code>${esc(PROBE.flowId)}</code>, request <code>${esc(PROBE.prId)}</code>, ${usd(PROBE.usdc)} test USDC, <b class="ok">payment-safe</b> · ${txl(PROBE.txHash, SEP)}</p></section>` : ''}
 
+${gates.length ? `<section class="card"><h2>When HSP fails</h2><p class="small">Offline end-to-end tests (local chain, a stand-in HSP that settles real EIP-3009 transfers), run from the repo with <code>CM_SCENARIO=&lt;name&gt; bash app/test/e2e-offline-qa.sh</code>. In each, Mum's yes leaves the visit <b>Confirmed and unpaid</b> on chain with a PaymentIssue record, both pages say so, and nothing is ever paid twice.</p>
+<dl>${gates.map((g) => `<div><dt>${esc({ 'failed-once': 'HSP payment-failed, then an automatic retry', timeout: 'HSP never confirms (timeout)', overcharge: 'HSP quotes more than the mandate', ok: 'All payments settle' }[g.scenario] || g.scenario)}</dt><dd><b class="ok">PASS</b>, ${g.checks} checks · paid ${g.paid}, issues recorded on chain ${g.issues}<span class="h">${esc({ 'failed-once': 'The first flow fails with no money moved; a new flow pays the visit once. 5 signatures, 4 transfers.', timeout: 'The flow stays unsettled; the server keeps querying the same flow and never signs or submits again.', overcharge: 'The signing firewall refuses before anything is signed; Mina can retry by hand.', ok: '4 transfers, 4 agency acknowledgements.' }[g.scenario] || '')}</span></dd></div>`).join('')}</dl></section>` : ''}
+
 <section class="card"><h2>Check it yourself</h2>
 <p class="small">Every link above opens a public explorer. This button reads <code>visits(id)</code> from the contract right now (HSK Chain testnet RPC, read-only) and compares each status and payment reference with this page.</p>
 <button id="check" class="go" type="button" data-rpc="${CHAINS.testnet.rpc}" data-contract="${CONTRACT}" data-sel="${sel}" hidden>Check on HSK Chain now</button>
 <noscript><p class="small">The check needs JavaScript; the explorer links work without it.</p></noscript>
 <p id="checkout" class="small" aria-live="polite"></p></section>
 
-<footer class="small"><p>Code: <a href="https://github.com/swiftbotlabs/caremandate" rel="noopener">github.com/swiftbotlabs/caremandate</a> · Built by Swift Bot Labs for HSK Chain Horizon · Seoul. Times are Korea time (KST). HSK Chain mainnet deployment follows the results: the organiser covers winning teams' mainnet gas.</p>
-<p>All ${checks} on-chain facts on this page were re-checked against HSK Chain testnet and Ethereum Sepolia when it was built.</p></footer>
+<footer class="small"><p>Code: <a href="https://github.com/swiftbotlabs/caremandate" rel="noopener">github.com/swiftbotlabs/caremandate</a> · Built by Swift Bot Labs for HSK Chain Horizon · Seoul. Times are Korea time (KST). Mainnet: the official rules say "Winning teams must deploy their projects on HSK Chain mainnet to claim a prize" and "Teams selected for the demo must deploy their smart contracts to HSK Chain Mainnet" (<a href="https://dorahacks.io/hackathon/hskchainseoul" rel="noopener">DoraHacks HSK Chain Seoul</a>, Prizes and Submission Requirements); the mainnet deploy is rehearsed on a fork of HSK Chain mainnet (chain 177) and runs when we are selected.</p>
+<p>All ${checks} on-chain facts on this page were re-checked against HSK Chain testnet${HSPNET === 'sepolia' ? ' and Ethereum Sepolia' : ''} when it was built.</p></footer>
 </main><script src="live.js" defer></script></body></html>
 `;
 

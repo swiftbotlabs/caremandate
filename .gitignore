@@ -6,3 +6,4 @@ app/state.json
 runs/
 .env
 *.keystore
+*.bak-*
