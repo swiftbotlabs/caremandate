@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { privateKeyToAccount } from 'viem/accounts';
 import { recoverTypedDataAddress } from 'viem';
-import { payVisit, firewall, pickToken, Refused, MERCHANT } from '../lib/hsp.mjs';
+import { payVisit, firewall, pickToken, Refused, MERCHANT, mcpClient } from '../lib/hsp.mjs';
 
 const FX = new URL('./fixtures/', import.meta.url);
 const CFG = JSON.parse(fs.readFileSync(new URL('live_chain_config.json', FX))).config;
@@ -122,4 +122,35 @@ test('settle poll: payment-failed and the deadline throw with the flow id (never
   await assert.rejects(waitSettled({ hsp: stuck, flowId: 'flow-2', prId: 'p', now: () => (t += 1000), settleMs: 5000 }), (e) => e.code === 'UNSETTLED' && e.flowId === 'flow-2' && e.lastStatus === 'payment-processing');
   const down = fakeHsp(); down.tool = async () => { throw new Error('ECONNRESET'); };
   await assert.rejects(waitSettled({ hsp: down, flowId: 'flow-3', prId: 'p' }), (e) => e.code === 'UNSETTLED' && /6x/.test(e.message));
+});
+
+// HSP QA drops ~8% of requests (11-25): transport failures are retried with backoff, except the calls that move a payment forward.
+function flakyFetch(failFirst) {
+  const calls = [];
+  const f = async (url, init) => {
+    const body = JSON.parse(init.body); calls.push(body.method === 'tools/call' ? body.params.name : body.method);
+    if (calls.length <= failFirst) throw new TypeError('fetch failed');
+    const reply = body.id === undefined ? '' : JSON.stringify({ jsonrpc: '2.0', id: body.id, result: body.method === 'initialize' ? {} : { structuredContent: { ok: true } } });
+    return new Response(reply, { status: body.id === undefined ? 202 : 200, headers: { 'content-type': 'application/json' } });
+  };
+  return { f, calls };
+}
+test('mcp client: transient fetch failures are retried with backoff (init and read tools)', async () => {
+  const { f, calls } = flakyFetch(2); const waits = [];
+  const c = mcpClient('https://hsp.test/', f, { sleep: async (ms) => { waits.push(ms); } });
+  assert.deepEqual(await c.tool('get_order', { flow_id: 'x' }), { ok: true });
+  assert.deepEqual(waits, [2000, 4000]);
+  assert.equal(calls.filter((n) => n === 'initialize').length, 3);
+});
+test('mcp client: submit_payment and finalize_payment are never retried (control: get_order is)', async () => {
+  for (const name of ['submit_payment', 'finalize_payment']) {
+    const { f, calls } = flakyFetch(0); let ready = false;
+    const c = mcpClient('https://hsp.test/', async (u, i) => { const b = JSON.parse(i.body); if (ready && b.method === 'tools/call') { calls.push('fail'); throw new TypeError('fetch failed'); } if (b.method === 'notifications/initialized') ready = true; return f(u, i); }, { sleep: async () => {} });
+    await assert.rejects(c.tool(name, {}), /fetch failed/);
+    assert.equal(calls.filter((n) => n === 'fail').length, 1, name);
+  }
+  const { f } = flakyFetch(0); let ready = false, fails = 0;
+  const c = mcpClient('https://hsp.test/', async (u, i) => { const b = JSON.parse(i.body); if (ready && b.method === 'tools/call' && fails++ < 1) throw new TypeError('fetch failed'); if (b.method === 'notifications/initialized') ready = true; return f(u, i); }, { sleep: async () => {} });
+  assert.deepEqual(await c.tool('get_order', {}), { ok: true });
+  assert.equal(fails, 2);
 });

@@ -25,9 +25,24 @@ export class HspError extends Error { constructor(msg, code) { super(msg); this.
 export class Refused extends Error { constructor(rule, detail) { super(`refused to sign: ${rule}${detail ? ` (${detail})` : ''}`); this.rule = rule; } }
 
 // ---------------------------------------------------------------- MCP client (initialize -> notifications/initialized -> tools/call)
-export function mcpClient(url = QA_URL, fetchImpl = fetch) {
+// HSP QA drops ~8% of requests (fetch failed, 11-25). Transport failures and 502/503/504 are retried with backoff, but never for the
+// calls that move a payment forward (finalize_payment, submit_payment): those get one try and fall through to query_payment.
+const NO_RETRY = new Set(['finalize_payment', 'submit_payment']);
+const RETRIES = Number(process.env.HSP_RETRIES ?? 5);                 // tries in total
+const RETRY_BASE_MS = Number(process.env.HSP_RETRY_BASE_MS ?? 2000);  // 2, 4, 8, 16 s
+const transient = (e) => (e instanceof HspError ? [502, 503, 504].includes(e.code) : (e?.name === 'TypeError' || e?.name === 'TimeoutError' || e?.name === 'AbortError'));
+export function mcpClient(url = QA_URL, fetchImpl = fetch, { sleep = (ms) => new Promise((r) => setTimeout(r, ms)), onRetry = () => {} } = {}) {
   let id = 0, session = null, ready = false;
-  async function post(body, expectReply = true) {
+  async function post(body, expectReply = true, retry = true) {
+    for (let n = 1; ; n++) {
+      try { return await post1(body, expectReply); } catch (e) {
+        if (!retry || n >= RETRIES || !transient(e)) throw e;
+        onRetry({ n, method: body.method, tool: body.params?.name, error: String(e.message || e).slice(0, 120) });
+        await sleep(RETRY_BASE_MS * 2 ** (n - 1));
+      }
+    }
+  }
+  async function post1(body, expectReply) {
     const headers = { 'content-type': 'application/json', accept: 'application/json, text/event-stream' };
     if (session) headers['mcp-session-id'] = session;
     if (process.env.HSP_RELAY_TOKEN) headers['x-relay-token'] = process.env.HSP_RELAY_TOKEN;   // only when HSP_MCP_URL points at relay/
@@ -53,7 +68,7 @@ export function mcpClient(url = QA_URL, fetchImpl = fetch) {
   return {
     async tool(name, args) {
       if (!ready) await init();
-      const res = await post({ jsonrpc: '2.0', id: ++id, method: 'tools/call', params: { name, arguments: args } });
+      const res = await post({ jsonrpc: '2.0', id: ++id, method: 'tools/call', params: { name, arguments: args } }, true, !NO_RETRY.has(name));
       let data = res?.structuredContent;
       if (data === undefined) {
         const txt = (res?.content || []).filter((c) => c.type === 'text').map((c) => c.text).join('');
