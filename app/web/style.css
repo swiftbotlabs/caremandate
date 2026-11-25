@@ -22,3 +22,5 @@ button:focus-visible { outline:4px solid #f2b53a; outline-offset:3px; }
 .approve { font:inherit; font-weight:700; border:0; border-radius:10px; padding:8px 12px; background:var(--ink); color:#fff; cursor:pointer; }
 .stat { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; text-align:center; } .stat b { display:block; font-size:28px; }
 code { font-size:12px; word-break:break-all; }
+.pay p { font-size:18px; margin:10px 0; padding:10px 12px; border-radius:10px; }
+.pay .pay-wait { color:var(--wait); background:var(--waitbg); } .pay .pay-ok { color:var(--ok); background:var(--okbg); font-weight:650; } .pay .pay-warn { color:var(--no); background:var(--nobg); }

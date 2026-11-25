@@ -4,6 +4,7 @@
 <body><main>
 <h1>Hello, Mum</h1><p class="sub">One question after each visit. Your answer is all it takes.</p>
 <div id="q" class="card"><p class="who">Loading…</p></div>
+<div id="pay" class="pay" aria-live="polite"></div>
 <p class="small" id="key"></p>
 </main>
 <script type="module">
@@ -30,12 +31,31 @@ async function show() {
       b.querySelectorAll('button').forEach((y) => y.disabled = true);
       const s = sign(pk, digest(cfg.chainId, cfg.contract, v.id, ok));
       const res = await fetch('/api/confirm', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ visitId: v.id, happened: ok, ...s }) });
+      const out = await res.json().catch(() => ({}));
       q.innerHTML = res.ok ? `<p class="done">${ok ? 'Thank you. Mina will see it.' : 'Thank you. Nothing will be paid for this one.'}</p>` : '<p class="who">That did not go through. Please try again in a minute.</p>';
+      if (res.ok && out.paying) { paying.set(v.id, { when: `${day(v.visitTime)} ${time(v.visitTime)}`, carer: r.carer || 'your carer' }); tick(); }
       setTimeout(show, 2500);
     };
     b.appendChild(x);
   }
   q.append(p, w, b);
+}
+// Payments run after Mum's answer is on chain; a real HSP payment takes about 3 minutes, so show it as pending until it settles.
+const paying = new Map(); let timer = null;
+async function tick() {
+  if (!paying.size) return;
+  let vs = []; try { vs = await (await fetch('/api/visits')).json(); } catch { /* keep the last state */ }
+  const box = document.getElementById('pay'); box.innerHTML = '';
+  let open = 0;
+  for (const [id, x] of paying) {
+    const v = vs.find((y) => y.id === id), p = v?.payment || {};
+    const line = document.createElement('p');
+    if (v?.status === 'Paid') { line.className = 'pay-ok'; line.textContent = `The ${x.when} visit is paid. Thank you, ${x.carer}.`; }
+    else if (p.status === 'failed' || p.status === 'unsettled') { line.className = 'pay-warn'; line.textContent = `The ${x.when} payment has not gone through yet. Mina has been told.`; }
+    else { open++; line.className = 'pay-wait'; line.textContent = `Paying ${x.carer} for the ${x.when} visit via HSP… this takes about 3 minutes.`; }
+    box.appendChild(line);
+  }
+  clearTimeout(timer); if (open) timer = setTimeout(tick, 4000);
 }
 show();
 </script></body></html>

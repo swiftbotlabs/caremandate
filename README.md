@@ -23,6 +23,7 @@ A missed visit is never paid. A fourth visit in a week waits for Mina. Nobody bu
 | `app/lib/hsp.mjs` | HSP Agentic Payment client (MCP over HTTP): order, then a **signing firewall** that checks HSP's EIP-712 data against our own order (payee = the agency, amount, token, chain, payer, time window, the x402 payload) before anything is signed, then finalize, submit and poll until HSP reports the payment safe. `HSP_MODE=mock` is a local stand-in, labelled MOCK everywhere and refused on mainnet. |
 | `app/test/hsp.test.mjs` | Offline tests of the HSP flow on real replies from HSP's QA server (`app/test/fixtures`), with real signatures; each firewall rule has a test that fails when the rule is removed. |
 | `app/test/e2e-local.sh` | The whole story on a local chain: deploy, mandate, 5 visits, Mum answers in the real page (yes, no, yes, yes, yes), Mina approves the held visit. |
+| `app/test/e2e-offline-qa.sh` | The same through the real HSP client code path (`HSP_MODE=qa`), against a local stand-in for HSP's server (`app/test/mock-hsp.mjs`, which checks every signature). Controls: `MOCK_HSP_FAIL=failed` or `query`, `CM_DROP_PAYTO=1`. |
 | `app/test/e2e-testnet.sh` | The same on HSK Chain testnet with real HSP payments. |
 | `app/hsp-probe.mjs` | One HSP payment, or `--dry` to stop before signing. |
 
@@ -32,9 +33,13 @@ Needs Foundry and Node 20+.
 forge test                         # contract tests
 cd app && npm install && npm test  # HSP flow tests (offline)
 bash test/e2e-local.sh             # local chain + Playwright (npm i playwright; npx playwright install chromium)
+bash test/e2e-offline-qa.sh        # local chain + the real HSP client against a local HSP stand-in
 ```
 Environment for the server: `CM_NET` (local, testnet, mainnet), `CM_CONTRACT`, `CM_MANDATE`, `FAMILY_AGENT_PK`, `FAMILY_PK`,
-`AGENCY_PAYTO`, `HSP_MODE` (qa or mock), `HSP_PAYER_PK`, `HSP_AMOUNT_USD` (default 0.01), `PORT`.
+`AGENCY_PAYTO`, `HSP_MODE` (qa or mock), `HSP_PAYER_PK`, `HSP_AMOUNT_USD` (default 0.01), `PORT`. With `HSP_MODE=qa` the server will not
+start without `AGENCY_PAYTO` and `HSP_PAYER_PK`. A real HSP payment takes about 3 minutes to reach `payment-safe`, so Mum's answer is
+acknowledged as soon as it is on chain and the payment runs in the background, shown as pending on both pages. `server.log` has one JSON
+line per request and per payment step (never keys); the HSP flow id is saved before the payment is signed, so a visit is never paid twice.
 
 ## HSP
 HSP's QA environment is open to hackathon teams by IP allowlist. Its test payments settle in Circle test USDC on Ethereum Sepolia (HSK Chain
@@ -43,7 +48,7 @@ under the team name `Swift Bot Labs (CareMandate)`.
 
 ## Status
 - Contract and app: working on a local chain (`e2e-local.sh` passes).
-- HSP: client and tests ready; waiting for HSP to allowlist our IP for the QA server.
+- HSP: allowlisted; a real QA payment has settled (`payment-safe`). Full testnet run with real HSP payments: next.
 - HSK Chain mainnet deployment: after the testnet run with real HSP payments.
 
 ## License

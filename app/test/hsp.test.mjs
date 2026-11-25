@@ -11,6 +11,7 @@ const CFG = JSON.parse(fs.readFileSync(new URL('live_chain_config.json', FX))).c
 const PREP = JSON.parse(fs.readFileSync(new URL('live_prepare_payment.json', FX)));
 const payer = privateKeyToAccount('0x' + '11'.repeat(32));
 const payTo = '0x58232CF98671Bc0Bd0E7aaA7cd6adE9EdB2E64A6';
+process.env.HSP_POLL_MS = '1';   // no real waits in the poll loop
 const NOW = 1793530000 * 1000;   // the fixture's validBefore is 1793535406 (about 1.5 h later)
 
 // a live-shaped prepare_payment for our payer (the fixture's own payer swapped in, nothing else changed)
@@ -98,4 +99,27 @@ test('qa flow: an order HSP describes differently (other merchant) is never prep
 test('mock mode is labelled MOCK', async () => {
   const r = await payVisit({ mode: 'mock', visitId: 1, amountUsd: '0.01', payTo, payer: payer.address });
   assert.match(r.flowId, /^MOCK-/); assert.equal(r.txHash, null);
+});
+
+test('settle poll: transient query errors and payment-timeout are ridden out; status changes are logged', async () => {
+  process.env.HSP_NETWORK = 'base-sepolia';
+  const hsp = fakeHsp({ statuses: ['payment-processing', 'payment-timeout', 'payment-included', 'payment-safe'] }); const orig = hsp.tool; let fails = 2;
+  hsp.tool = async (n, a) => { if (n === 'query_payment' && fails-- > 0) throw new Error('HSP MCP HTTP 502'); return orig(n, a); };
+  const logs = [];
+  const r = await payVisit({ mode: 'qa', visitId: 10, amountUsd: '0.01', payTo, payer: payer.address, client: hsp, now: () => NOW, log: (o) => logs.push(o),
+    signTypedData: (td) => payer.signTypedData(td) });
+  assert.equal(r.status, 'payment-safe');
+  assert.deepEqual(logs.filter((l) => l.step === 'status').map((l) => l.status), ['payment-processing', 'payment-timeout', 'payment-included', 'payment-safe']);
+  assert.equal(logs.filter((l) => l.step === 'query_error').length, 2);
+  assert.ok(logs.some((l) => l.step === 'submitted' && l.flowId === 'flow-1'));
+});
+
+test('settle poll: payment-failed and the deadline throw with the flow id (never a silent hang)', async () => {
+  const { waitSettled } = await import('../lib/hsp.mjs');
+  const failed = fakeHsp({ statuses: ['payment-failed'] });
+  await assert.rejects(waitSettled({ hsp: failed, flowId: 'flow-1', prId: 'p' }), (e) => e.code === 'FAILED' && e.flowId === 'flow-1');
+  const stuck = fakeHsp({ statuses: Array(1000).fill('payment-processing') }); let t = 0;
+  await assert.rejects(waitSettled({ hsp: stuck, flowId: 'flow-2', prId: 'p', now: () => (t += 1000), settleMs: 5000 }), (e) => e.code === 'UNSETTLED' && e.flowId === 'flow-2' && e.lastStatus === 'payment-processing');
+  const down = fakeHsp(); down.tool = async () => { throw new Error('ECONNRESET'); };
+  await assert.rejects(waitSettled({ hsp: down, flowId: 'flow-3', prId: 'p' }), (e) => e.code === 'UNSETTLED' && /6x/.test(e.message));
 });

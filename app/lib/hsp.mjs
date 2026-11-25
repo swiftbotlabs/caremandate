@@ -16,7 +16,10 @@ export const MERCHANT = process.env.HSP_MERCHANT_NAME || 'Swift Bot Labs (CareMa
 const network = () => process.env.HSP_NETWORK || 'sepolia';
 const PER_PAYMENT_CAP_USD = Number(process.env.HSP_CAP_USD || 0.05);
 const FEE_ALLOWANCE = 1.05;                                  // HSP converts USD at a live rate (0.01 USD -> 10002 raw seen live)
-const POLL_MS = Number(process.env.HSP_POLL_MS || 15000);
+const POLL_MS = () => Number(process.env.HSP_POLL_MS || 15000);   // read per call (tests set it)
+// HSP reports payment-safe ~165 s after the transfer is on chain (live 2026-11-25); a payment can also pass through payment-timeout and recover.
+const SETTLE_MS = Number(process.env.HSP_SETTLE_MS || 20 * 60e3);
+const MAX_QUERY_ERRORS = 6;                                  // consecutive failed query_payment calls before we give up (the flow id is kept)
 
 export class HspError extends Error { constructor(msg, code) { super(msg); this.code = code; } }
 export class Refused extends Error { constructor(rule, detail) { super(`refused to sign: ${rule}${detail ? ` (${detail})` : ''}`); this.rule = rule; } }
@@ -141,6 +144,26 @@ export function firewall(prepIn, { payer, payTo, token, amountUsd, now = Date.no
 
 const statusOf = (q) => { const h = holder(q, 'status'); const p = q?.payment || h?.payment || {}; return { st: h.status || p.status, tx: p.tx_signature || h.tx_signature || null, att: q?.attribution_verified ?? h.attribution_verified ?? p.attribution_verified }; };
 
+/** Poll query_payment until payment-safe/finalized. Never signs or submits, so it is safe to call again for a flow that is already
+ *  submitted (resume after a restart). Throws HspError code 'UNSETTLED' (with flowId, prId, lastStatus, txHash) when the deadline passes. */
+export async function waitSettled({ hsp = mcpClient(), flowId, prId, network = network_(), mode = 'qa', log = () => {}, now = Date.now, settleMs = SETTLE_MS }) {
+  const t0 = now(); let last = null, tx = null, errs = 0;
+  while (true) {
+    let q = null;
+    try { q = await hsp.tool('query_payment', { flow_id: flowId, payment_request_id: prId, expected_merchant_name: MERCHANT }); errs = 0; }
+    catch (e) { errs++; log({ step: 'query_error', flowId, n: errs, error: String(e.message).slice(0, 200) }); if (errs >= MAX_QUERY_ERRORS) { const x = new HspError(`HSP query_payment failed ${errs}x in a row for flow ${flowId}: ${String(e.message).slice(0, 150)}`, 'UNSETTLED'); Object.assign(x, { flowId, prId, lastStatus: last, txHash: tx }); throw x; } }
+    if (q) {
+      const { st, tx: t, att } = statusOf(q); if (t) tx = t;
+      if (st !== last) { log({ step: 'status', flowId, status: st, tx, s: Math.round((now() - t0) / 1000) }); last = st; }
+      if (st === 'payment-safe' || st === 'payment-finalized') return { mode, flowId, paymentRequestId: prId, txHash: tx, status: st, network, attributionVerified: att === true };
+      if (st === 'payment-failed') { const x = new HspError('HSP payment failed for flow ' + flowId, 'FAILED'); Object.assign(x, { flowId, prId, lastStatus: st, txHash: tx }); throw x; }
+    }
+    if (now() - t0 > settleMs) { const x = new HspError(`HSP payment not settled in ${Math.round(settleMs / 60e3)} min (last status ${last}): query flow ${flowId} later; never pay twice`, 'UNSETTLED'); Object.assign(x, { flowId, prId, lastStatus: last, txHash: tx }); throw x; }
+    await new Promise((r) => setTimeout(r, POLL_MS()));
+  }
+}
+const network_ = () => network();
+
 /** Pay one visit. amountUsd like "0.01". Returns {mode, flowId, paymentRequestId, txHash, status, network, attributionVerified}. */
 export async function payVisit({ mode = process.env.HSP_MODE || 'mock', visitId, amountUsd, payTo, payer, signTypedData, client, log = () => {}, now = Date.now }) {
   if (mode === 'mock') {
@@ -175,17 +198,8 @@ export async function payVisit({ mode = process.env.HSP_MODE || 'mock', visitId,
       if (/quote|expired/i.test(e.message) && attempt < 3) continue;
       if (!(e instanceof HspError) || e.code === 403) throw e;   // a gateway answer: fall through to one query, never resubmit
     }
-    log({ step: 'submitted', flowId });
-    for (let i = 0; i < 40; i++) {
-      let q;
-      try { q = await hsp.tool('query_payment', { flow_id: flowId, payment_request_id: prId, expected_merchant_name: MERCHANT }); }
-      catch (e) { if (i >= 4) throw e; await new Promise((r) => setTimeout(r, POLL_MS)); continue; }
-      const { st, tx, att } = statusOf(q);
-      if (st === 'payment-safe' || st === 'payment-finalized') return { mode, flowId, paymentRequestId: prId, txHash: tx, status: st, network: token.network, attributionVerified: att === true };
-      if (st === 'payment-failed') throw new HspError('HSP payment failed for flow ' + flowId);
-      await new Promise((r) => setTimeout(r, POLL_MS));
-    }
-    throw new HspError('HSP payment not settled in 10 min: query flow ' + flowId + ' later; never pay twice');
+    log({ step: 'submitted', flowId, prId });
+    return await waitSettled({ hsp, flowId, prId, network: token.network, mode, log, now });
   }
   throw new HspError('quote kept expiring');
 }

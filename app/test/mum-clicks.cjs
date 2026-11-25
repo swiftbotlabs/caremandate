@@ -13,15 +13,26 @@ const SHOTS = process.env.CM_SHOTS || require('path').join(__dirname, '..', '..'
     if (i === 1) await p.screenshot({ path: SHOTS + '/mum-question.png' });
     await p.getByRole('button', { name: ans }).click();
     await p.waitForSelector('.done', { timeout: TMO });
+    if (i === 1) { await p.waitForSelector('.pay-wait, .pay-ok, .pay-warn', { timeout: 20000 }); await p.screenshot({ path: SHOTS + '/mum-paying.png' }); }
+    await p.waitForTimeout(2600);   // the page shows the next question 2.5 s after an answer
   }
-  await p.screenshot({ path: SHOTS + '/mum-done.png' });
   const m = await ctx.newPage(); await m.goto('' + BASE + '/mina'); await m.waitForSelector('.approve', { timeout: 20000 });
   await m.screenshot({ path: SHOTS + '/mina-held.png', fullPage: true });
-  await m.click('.approve'); await m.waitForTimeout(Number(process.env.CM_APPROVE_WAIT || 5000)); await m.reload(); await m.waitForTimeout(1500);
+  await m.click('.approve');
+  // payments run in the background (a real HSP payment takes ~3 min each, one at a time): wait until none is in flight
+  const want = ['Paid', 'Rejected', 'Paid', 'Paid', 'Paid'], until = Date.now() + Number(process.env.CM_SETTLE_WAIT || 60000);
+  let vs = [], last = '';
+  while (Date.now() < until) {
+    vs = await (await fetch('' + BASE + '/api/visits')).json();
+    const now = JSON.stringify(vs.map((v) => [v.status, v.payment && (v.payment.hspStatus || v.payment.status)]));
+    if (now !== last) { console.log(new Date().toISOString(), now); last = now; }
+    if (vs.every((v) => v.status !== 'Confirmed' && v.status !== 'Held' && (v.status !== 'Paid' || v.payment?.markPaidTx)) || vs.some((v) => ['failed', 'unsettled'].includes(v.payment?.status))) break;
+    await new Promise((r) => setTimeout(r, 3000));
+  }
+  await p.screenshot({ path: SHOTS + '/mum-done.png' });
+  await m.reload(); await m.waitForTimeout(1500);
   await m.screenshot({ path: SHOTS + '/mina-after.png', fullPage: true });
-  const vs = await (await fetch('' + BASE + '/api/visits')).json();
   console.log(JSON.stringify(vs.map((v) => [v.id, v.status, v.payment ? v.payment.mode : null])));
-  const want = ['Paid', 'Rejected', 'Paid', 'Paid', 'Paid'];
   const got = vs.map((v) => v.status);
   console.log(JSON.stringify(got) === JSON.stringify(want) ? 'E2E PASS' : 'E2E FAIL ' + JSON.stringify(got), 'page errors', JSON.stringify(errs));
   await b.close();
