@@ -4,6 +4,8 @@ import { createPublicClient, createWalletClient, http, defineChain, keccak256, t
 import { privateKeyToAccount } from 'viem/accounts';
 
 export const ABI = JSON.parse(fs.readFileSync(new URL('../abi.json', import.meta.url), 'utf8'));
+// HSK testnet RPC sometimes times out on connect (run d, 11-25): longer timeout + retries. A retried raw-tx send is safe (same nonce -> 'already known').
+const RPC_OPTS = { timeout: 30_000, retryCount: 5, retryDelay: 1_000 };
 export const STATUS = ['None', 'Posted', 'Confirmed', 'Held', 'Paid', 'Rejected'];
 
 export const CHAINS = {
@@ -15,8 +17,8 @@ export const CHAINS = {
 export function connect(net = process.env.CM_NET || 'local') {
   const c = CHAINS[net]; if (!c) throw new Error('unknown network ' + net);
   const chain = defineChain({ id: c.id, name: c.name, nativeCurrency: { name: 'HSK', symbol: 'HSK', decimals: 18 }, rpcUrls: { default: { http: [c.rpc] } } });
-  const pub = createPublicClient({ chain, transport: http(c.rpc) });
-  const wallet = (pk) => { const account = privateKeyToAccount(pk); return { account, client: createWalletClient({ account, chain, transport: http(c.rpc) }) }; };
+  const pub = createPublicClient({ chain, transport: http(c.rpc, RPC_OPTS) });
+  const wallet = (pk) => { const account = privateKeyToAccount(pk); return { account, client: createWalletClient({ account, chain, transport: http(c.rpc, RPC_OPTS) }) }; };
   return { net, chain, cfg: c, pub, wallet };
 }
 
