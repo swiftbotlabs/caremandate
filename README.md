@@ -66,12 +66,14 @@ under the team name `Swift Bot Labs (CareMandate)`.
 
 ## Status
 <!-- STATUS:BEGIN -->
-- Full run on **HSK Chain testnet with real HSP QA payments** (25 Nov 2026, contract `0x203351f807514944873b49cd9d36b5af74de094c`):
-  5 visits; Mum said Yes to 4 and No to 1; visits 1, 3, 4 and 5 paid through HSP (each `payment-safe`, Sepolia tx + `markPaid` on HSK
-  Chain); visit 2 never paid; visit 5 (the 4th that week) held until Mina approved it. The full record, with every flow id and tx link:
-  https://apps.swiftbotlab.workers.dev/caremandate/ (built by `app/demo-page.mjs`, which re-checks every fact on chain first and refuses to
-  write the page on any mismatch). Run files: `evidence/testnet-20261125T1246Z/`.
-- HSK Chain mainnet: the same contract is deployed when the project is selected for the demo (the organiser covers winning teams' mainnet gas).
+- Full run on **HSK Chain testnet with real HSP QA payments settling in Circle test USDC on Ethereum Sepolia** (25 Nov 2026, contract `0xa95ac53799f6770a2a907487edc367c26795fd26`):
+  5 visits; Mum said Yes to 4 and No to 1; visits 1, 3, 4, 5 paid through HSP (each `payment-safe`, 0.12 test USDC in total, the
+  settlement tx and the amount recorded by `markPaid` on HSK Chain); each payment acknowledged on chain by the agency's own agent after it
+  checked the transfer itself; a 46,000-won visit refused by the contract (cap 45,000 won); mandate rate 743273 USDC units
+  per 1,000,000 won (1345.4 KRW/USD, ECB reference rate via api.frankfurter.dev, 2026-11-25, testnet scale 1:1000). Record:
+  https://apps.swiftbotlab.workers.dev/caremandate/ (built by `app/demo-page.mjs`, which re-checks every fact on chain first). Run files:
+  `evidence/testnet-20261125T1718Z/`. Failure modes (offline, one command each): `evidence/offline-*/gate.json`.
+- HSK Chain mainnet: rehearsed on a fork of mainnet (`app/test/fork-mainnet-rehearsal.sh`, `evidence/fork-mainnet-*/rehearsal.json`); deployed when we are selected for the demo, as the rules require of demo teams.
 <!-- STATUS:END -->
 
 ## License
