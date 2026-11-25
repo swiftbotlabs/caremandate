@@ -26,6 +26,7 @@ A missed visit is never paid. A fourth visit in a week waits for Mina. Nobody bu
 | `app/test/e2e-offline-qa.sh` | The same through the real HSP client code path (`HSP_MODE=qa`), against a local stand-in for HSP's server (`app/test/mock-hsp.mjs`, which checks every signature). Controls: `MOCK_HSP_FAIL=failed` or `query`, `CM_DROP_PAYTO=1`. |
 | `app/test/e2e-testnet.sh` | The same on HSK Chain testnet with real HSP payments. |
 | `app/hsp-probe.mjs` | One HSP payment, or `--dry` to stop before signing. |
+| `app/demo-page.mjs` | Builds the read-only record page of a run (`demo/`): every value re-checked on HSK Chain and Sepolia first. |
 
 ## Run it
 Needs Foundry and Node 20+.
@@ -47,9 +48,12 @@ testnet USDC can't be minted by teams), so the visit records live on HSK Chain a
 under the team name `Swift Bot Labs (CareMandate)`.
 
 ## Status
-- Contract and app: working on a local chain (`e2e-local.sh` passes).
-- HSP: allowlisted; a real QA payment has settled (`payment-safe`). Full testnet run with real HSP payments: next.
-- HSK Chain mainnet deployment: after the testnet run with real HSP payments.
+- Full run on **HSK Chain testnet with real HSP QA payments** (25 Nov 2026, contract `0x203351f807514944873b49cd9d36b5af74de094c`):
+  5 visits; Mum said Yes to 4 and No to 1; visits 1, 3, 4 and 5 paid through HSP (each `payment-safe`, Sepolia tx + `markPaid` on HSK
+  Chain); visit 2 never paid; visit 5 (the 4th that week) held until Mina approved it. The full record, with every flow id and tx link:
+  https://apps.swiftbotlab.workers.dev/caremandate/ (built by `app/demo-page.mjs`, which re-checks every fact on chain first and refuses to
+  write the page on any mismatch). Run files: `evidence/testnet-20261125T1246Z/`.
+- HSK Chain mainnet: the same contract is deployed when the project is selected for the demo (the organiser covers winning teams' mainnet gas).
 
 ## License
 MIT (see LICENSE). `lib/forge-std` is Foundry's standard library under its own license.

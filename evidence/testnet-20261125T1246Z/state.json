@@ -1,0 +1,134 @@
+{
+ "messages": [
+  {
+   "at": "2026-11-25T12:59:39.555Z",
+   "text": "Wednesday's visit: approved by you, paid (45,000 won visit) via HSP, test payment $0.01.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-25T12:56:31.467Z",
+   "text": "Wednesday's visit: confirmed by Mum, paid (45,000 won visit) via HSP, test payment $0.01.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-25T12:53:24.308Z",
+   "text": "Wednesday's visit: confirmed by Mum, paid (45,000 won visit) via HSP, test payment $0.01.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-25T12:50:21.870Z",
+   "text": "Wednesday's visit: confirmed by Mum, paid (45,000 won visit) via HSP, test payment $0.01.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-25T12:47:54.009Z",
+   "text": "Wednesday's visit is the 4th this week. It waits for you: approve it on your page if you want it paid.",
+   "kind": "warn"
+  },
+  {
+   "at": "2026-11-25T12:47:27.123Z",
+   "text": "Wednesday's visit: Mum says it did not happen. Nothing paid.",
+   "kind": "warn"
+  }
+ ],
+ "receipts": {
+  "0x47aa36d99781fa4937a52aa1f95f5867a9a7250a1d956b18157b78ea507dea2d": {
+   "mandateId": 1,
+   "visitTime": 1795603650,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Tue visit: lunch, medicines, a short walk",
+   "agency": "0xA8A49A6Ca872D54a8FD5FB121139De9bff62a48D"
+  },
+  "0xb85bc26356c707d4d9a4d677c6972ec2b79550ac70c68c00f4adf16a9d7a403b": {
+   "mandateId": 1,
+   "visitTime": 1795603710,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Thu visit: lunch, medicines, a short walk",
+   "agency": "0xA8A49A6Ca872D54a8FD5FB121139De9bff62a48D"
+  },
+  "0x6b741bbf74254b4d44a1003728bd762c879813b9634958801631ded4c935cff4": {
+   "mandateId": 1,
+   "visitTime": 1795603770,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Fri visit: lunch, medicines, a short walk",
+   "agency": "0xA8A49A6Ca872D54a8FD5FB121139De9bff62a48D"
+  },
+  "0xd1343c50750f58cd6250ad50a9e4ac229e94def8af01dac8234c6c1b2283b3c7": {
+   "mandateId": 1,
+   "visitTime": 1795603830,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Sat visit: lunch, medicines, a short walk",
+   "agency": "0xA8A49A6Ca872D54a8FD5FB121139De9bff62a48D"
+  },
+  "0xdde1790576419ca16243be7ceb824dde6de8d23b78a9ef2405235bd1bc833c1c": {
+   "mandateId": 1,
+   "visitTime": 1795603890,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Sun visit: lunch, medicines, a short walk",
+   "agency": "0xA8A49A6Ca872D54a8FD5FB121139De9bff62a48D"
+  }
+ },
+ "payments": {
+  "1": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-25T12:47:19.298Z",
+   "flowId": "91545a99-9d3b-4e2b-8381-376b66abab3d",
+   "paymentRequestId": "CARE-PR-20261125124720-2fedbe",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0x64bdbedcd8ac24eb5458fb8d1d46986deac4ac761ef677fe3164520754b90fb2",
+   "network": "sepolia",
+   "attributionVerified": true,
+   "settledAt": "2026-11-25T12:50:16.985Z",
+   "markPaidTx": "0x511b975d8c203ac17511a3adbeb020fe380a1acfd82422c6b2e45a7aaf011075"
+  },
+  "3": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-25T12:47:34.571Z",
+   "flowId": "43cf17cd-7d5b-49c5-997d-516e7f475a2f",
+   "paymentRequestId": "CARE-PR-20261125125024-87e201",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0xcd208be83744af06f1faf1c30daf7f3522fec9778aa0f7b99f22fb24289b2d71",
+   "network": "sepolia",
+   "attributionVerified": true,
+   "settledAt": "2026-11-25T12:53:21.216Z",
+   "markPaidTx": "0xf44748f40d3e2ed12b3768f8235e68f57909b8ebd4f0d3ce47d4ad9c525a8c00"
+  },
+  "4": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-25T12:47:43.902Z",
+   "flowId": "1cd6ed0b-09d2-4991-88f0-85d76037ab7b",
+   "paymentRequestId": "CARE-PR-20261125125325-7e26b5",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0x2c7147212b70fdd17d58c00f340cfaf1b9494f0d20aab29a34db35da50bb3d31",
+   "network": "sepolia",
+   "attributionVerified": true,
+   "settledAt": "2026-11-25T12:56:26.524Z",
+   "markPaidTx": "0xa56181dd4dda7f2bb8f9ca6fbc03061ad02a30d8d6a20ef076bb97bc9f84cd75"
+  },
+  "5": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-25T12:48:03.393Z",
+   "flowId": "75ddb56a-f84e-4911-a4e9-4f1298c174cd",
+   "paymentRequestId": "CARE-PR-20261125125632-260798",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0x5d689123e1f63bf79783466eafbd27b1040af51f3292a34b7deb8ea641821778",
+   "network": "sepolia",
+   "attributionVerified": true,
+   "settledAt": "2026-11-25T12:59:34.638Z",
+   "markPaidTx": "0xdfb466d5fbc18776efdb8b7a932d3a6f2d4cd9d554f3021e6a67fed7a4a2aef9"
+  }
+ }
+}
