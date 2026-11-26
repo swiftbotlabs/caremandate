@@ -1,0 +1,9 @@
+{"at":"2026-11-26T04:24:58.623Z","agent":"agency","event":"start","net":"mainnet","contract":"0x1173198761ac17f8e40f97973a1e4ed0419a11c3","mandate":1,"payTo":"0x58232CF98671Bc0Bd0E7aaA7cd6adE9EdB2E64A6","token":"0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238","settleRpc":"http://127.0.0.1:8557","every":5000}
+{"at":"2026-11-26T04:24:58.902Z","agent":"agency","event":"check","rc":0,"head":30659979,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-26T04:25:03.930Z","agent":"agency","event":"check","rc":0,"head":30659980,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-26T04:25:08.939Z","agent":"agency","event":"check","rc":0,"head":30659980,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-26T04:25:13.957Z","agent":"agency","event":"check","rc":0,"head":30659981,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-26T04:25:18.965Z","agent":"agency","event":"check","rc":0,"head":30659981,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-26T04:25:28.516Z","agent":"agency","event":"ack","visitId":1,"paidRaw":"740002","settlementTx":"0xd58d7d0ad1823fee1af40335d26aaa485fc27e0c037e2a896058738d2c2ea0b7","markPaidTx":"0x45a90dc68080287b7549993fcea3b51538047c5c80b779f7dd290c1b835a7427","ackTx":"0x1c2066670662ca5a09844becf5922a6f50275e0cff4d0b78e770c98e714de358"}
+{"at":"2026-11-26T04:25:28.517Z","agent":"agency","event":"check","rc":0,"head":30659982,"settledEvents":1,"issueEvents":0,"pending":0,"acks":1}
+{"at":"2026-11-26T04:25:28.517Z","agent":"agency","event":"done","acks":1}

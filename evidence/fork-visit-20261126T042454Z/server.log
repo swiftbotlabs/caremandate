@@ -1,0 +1,14 @@
+{"at":"2026-11-26T04:24:58.053Z","event":"start","port":8791,"net":"mainnet","contract":"0x1173198761ac17f8e40f97973a1e4ed0419a11c3","hspMode":"qa","hspNetwork":"sepolia","payTo":"0x58232CF98671Bc0Bd0E7aaA7cd6adE9EdB2E64A6","payer":"0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65","review":"model+rules openai/gpt-oss-20b","plan":{"tasks":["lunch","medicines","walk"],"minMinutes":60,"startToleranceMin":45,"tz":"Asia/Seoul"}}
+caremandate on :8791 mainnet 0x1173198761ac17f8e40f97973a1e4ed0419a11c3
+{"at":"2026-11-26T04:25:08.625Z","event":"request","path":"/api/confirm","visitId":1,"happened":true}
+{"at":"2026-11-26T04:25:13.327Z","event":"confirmed","visitId":1,"happened":true,"status":"Confirmed","tx":"0xf2b0c479d585c54df08da8179390f0dba210b81d1626170509f7e3247fb4f610"}
+{"at":"2026-11-26T04:25:14.251Z","event":"review","visitId":1,"decision":"pay","source":"model+rules","rules":[],"model":"openai/gpt-oss-20b","modelDecision":"pay","modelError":null,"modelMs":920,"reasons":[]}
+{"at":"2026-11-26T04:25:14.252Z","event":"pay_queued","visitId":1,"mode":"qa","attempt":1}
+{"at":"2026-11-26T04:25:14.254Z","event":"http","method":"POST","path":"/api/confirm","code":200,"ms":5629}
+{"at":"2026-11-26T04:25:14.257Z","event":"pay_start","visitId":1,"mode":"qa","network":"sepolia","payTo":"0x58232CF98671Bc0Bd0E7aaA7cd6adE9EdB2E64A6","payer":"0x15d34AAf54267DB7D7c367839AAf71A00a2C6A65","usd":"0.74","won":"1000","rate":"743273376","maxRaw":"780437"}
+{"at":"2026-11-26T04:25:14.282Z","event":"hsp","visitId":1,"step":"create_order","flowId":"MOCKHSP-fece1168-4ee2-4ccc-8117-3c6a0ece40f9","prId":"CARE-PR-20261126042514-529d3e"}
+{"at":"2026-11-26T04:25:14.287Z","event":"hsp","visitId":1,"step":"firewall_ok","flowId":"MOCKHSP-fece1168-4ee2-4ccc-8117-3c6a0ece40f9","raw":"740002","maxRaw":"780437","network":"sepolia","token":"0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"}
+{"at":"2026-11-26T04:25:18.346Z","event":"hsp","visitId":1,"step":"submitted","flowId":"MOCKHSP-fece1168-4ee2-4ccc-8117-3c6a0ece40f9","prId":"CARE-PR-20261126042514-529d3e","raw":"740002"}
+{"at":"2026-11-26T04:25:18.351Z","event":"hsp","visitId":1,"step":"status","flowId":"MOCKHSP-fece1168-4ee2-4ccc-8117-3c6a0ece40f9","status":"payment-included","tx":"0xd58d7d0ad1823fee1af40335d26aaa485fc27e0c037e2a896058738d2c2ea0b7","s":0}
+{"at":"2026-11-26T04:25:19.356Z","event":"hsp","visitId":1,"step":"status","flowId":"MOCKHSP-fece1168-4ee2-4ccc-8117-3c6a0ece40f9","status":"payment-safe","tx":"0xd58d7d0ad1823fee1af40335d26aaa485fc27e0c037e2a896058738d2c2ea0b7","s":1}
+{"at":"2026-11-26T04:25:23.994Z","event":"paid","visitId":1,"flowId":"MOCKHSP-fece1168-4ee2-4ccc-8117-3c6a0ece40f9","status":"payment-safe","network":"sepolia","txHash":"0xd58d7d0ad1823fee1af40335d26aaa485fc27e0c037e2a896058738d2c2ea0b7","paidRaw":"740002","markPaidTx":"0x45a90dc68080287b7549993fcea3b51538047c5c80b779f7dd290c1b835a7427","s":10}

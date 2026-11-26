@@ -37,6 +37,7 @@ chain, both pages say so, and it is never paid twice. The agency's agent checks 
 | `app/test/e2e-local.sh` | The whole story on a local chain: deploy, mandate, 5 visits, Mum answers in the real page (yes, no, yes, yes, yes), Mina approves the held visit. |
 | `app/test/e2e-offline-qa.sh` | One command, no network: anvil as chain 133 with a test EIP-3009 USDC at HSP's HSK-testnet USDC address, the real HSP client code path (`HSP_MODE=qa`, `HSP_NETWORK=hashkey-testnet`) against a local HSP stand-in (`app/test/mock-hsp.mjs`: checks every signature, its gateway settles the signed transfer on the local chain), the agency's watcher, a cap-trip visit and Mum's real page. Gate: `app/test/e2e-gate.mjs` reads the chain. Note review: `CM_SCENARIO=review` (visit 4's note is odd: held until Mina presses Pay anyway; with `REVIEW_OFF=1` the gate fails). Failure modes: `CM_SCENARIO=failed-once` (HSP payment-failed, automatic retry, paid once), `timeout` (never confirmed: the same flow is queried, never re-signed), `overcharge` (the signing firewall refuses). Control: `CM_DROP_PAYTO=1`. |
 | `app/test/e2e-testnet.sh` | The same on HSK Chain testnet with real HSP payments, settling on HSK Chain (`hashkey-testnet`) when the payer holds that USDC, else on Sepolia. |
+| `app/mainnet-visit.sh` | One visit cycle on HSK Chain mainnet against the deployed contract: the agency posts a visit with its note, Mum's tablet key signs yes (`app/mum-sign.mjs`, checked against the contract's `confirmDigest`), Mina's agent reads the note and pays through HSP, `markPaid`, then the agency's `ackPaid`; read back by `app/mainnet-visit-check.mjs`. `--fork` rehearses it on a local fork of mainnet with a local Sepolia stand-in (`evidence/fork-visit-20261126T042454Z/`: 4 txs, 341,508 gas, about 0.13-0.17 HSK). `--live` has guards: chain, gas price, roles, balances, once only, a spend cap. |
 | `app/test/fork-mainnet-rehearsal.sh` | The mainnet deploy rehearsed on a fork of HSK Chain mainnet (chain 177) at real scale, priced in USD from live gas and HSK prices. |
 | `app/hsp-probe.mjs` | One HSP payment, or `--dry` to stop before signing. |
 | `app/demo-page.mjs` | Builds the read-only record page of a run (`demo/`): every value re-checked on HSK Chain and Sepolia first. |
@@ -70,7 +71,8 @@ A retry of a flow HSP already had first asks HSP about that flow: if it settled 
 HSP's QA environment is open to hackathon teams by IP allowlist. Its live `get_chain_config` (read 25 Nov 2026) offers sepolia, hashkey-testnet,
 bsc-testnet, base-sepolia and arbitrum-sepolia; on `hashkey-testnet` (chain 133) the EIP-3009 token is USDC `0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6`
 (`app/test/fixtures/live_chain_config_20261125.json`). `HSP_NETWORK=hashkey-testnet` settles on HSK Chain itself; that USDC has no public
-faucet, so the payer must be funded with it first. Otherwise payments settle in Circle test USDC on Ethereum Sepolia. Every payment is reported
+faucet, so the payer must be funded with it first. `CM_FORK_HSKTESTNET=1 bash app/test/e2e-offline-qa.sh` runs the whole flow on a local fork of
+HSK testnet and settles through the real HSK-testnet USDC contract (`evidence/offline-ok-hskfork-20261126T042925Z/`). Otherwise payments settle in Circle test USDC on Ethereum Sepolia. Every payment is reported
 under the team name `Swift Bot Labs (CareMandate)`.
 
 ## Status

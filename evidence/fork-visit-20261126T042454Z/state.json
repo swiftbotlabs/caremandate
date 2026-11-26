@@ -1,0 +1,65 @@
+{
+ "messages": [
+  {
+   "at": "2026-11-26T04:25:23.994Z",
+   "text": "Thursday's visit: confirmed by Mum, paid (1,000 won visit) via HSP: $0.74 test USDC on sepolia.",
+   "kind": "ok"
+  }
+ ],
+ "receipts": {
+  "0x8a4d8598c4b383a1ac0d4092baf1097526f599bed74b3f8dc638855bd773604b": {
+   "mandateId": 1,
+   "visitTime": 1795666493,
+   "amountWon": 1000,
+   "carer": "Ji-woo",
+   "tasks": "lunch, medicines, a short walk",
+   "agency": "0xA8A49A6Ca872D54a8FD5FB121139De9bff62a48D",
+   "note": "Arrived 13:16, left 14:49. Cooked rice porridge for lunch and she ate most of it. Gave her morning pills with water. 25-minute walk to the park; she was in good spirits."
+  }
+ },
+ "payments": {
+  "1": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T04:25:14.251Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.74",
+   "maxRaw": "780437",
+   "flowId": "MOCKHSP-fece1168-4ee2-4ccc-8117-3c6a0ece40f9",
+   "paymentRequestId": "CARE-PR-20261126042514-529d3e",
+   "paidRaw": "740002",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0xd58d7d0ad1823fee1af40335d26aaa485fc27e0c037e2a896058738d2c2ea0b7",
+   "network": "sepolia",
+   "attributionVerified": true,
+   "token": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+   "chainId": 11155111,
+   "retryable": false,
+   "settledAt": "2026-11-26T04:25:19.357Z",
+   "markPaidTx": "0x45a90dc68080287b7549993fcea3b51538047c5c80b779f7dd290c1b835a7427"
+  }
+ },
+ "reviews": {
+  "1": {
+   "at": "2026-11-26T04:25:13.328Z",
+   "decision": "pay",
+   "source": "model+rules",
+   "reasons": [],
+   "rules": [],
+   "facts": {
+    "arrive": 796,
+    "leave": 889,
+    "visitStart": "13:14",
+    "minutes": 93
+   },
+   "model": {
+    "name": "openai/gpt-oss-20b",
+    "decision": "pay",
+    "reasons": [],
+    "ms": 920
+   }
+  }
+ }
+}

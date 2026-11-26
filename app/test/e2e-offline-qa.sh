@@ -9,6 +9,8 @@
 #   CM_SCENARIO=failed-once|timeout|overcharge bash ...  failure modes (gate: test/e2e-gate.mjs); each must PASS its own gate
 #   CM_SCENARIO=review bash ...                          visit 4 has an odd note: Mina's agent holds it (no HSP order) until Mina
 #                                                        presses "Pay anyway"; control: + REVIEW_OFF=1 -> paid unread, gate FAILS
+#   CM_FORK_HSKTESTNET=1 bash ...                       the same on a local fork of HSK testnet, settling through the REAL HSK-testnet
+#                                                        USDC contract (FiatToken) instead of the test token
 #   CM_DROP_PAYTO=1 bash ...                             control: no AGENCY_PAYTO -> the server refuses to start, script fails
 # No network. Output: $CM_RUNS/offline-<scenario>-<time>/
 set -euo pipefail
@@ -18,10 +20,18 @@ export TMPDIR=${TMPDIR:-/tmp}
 SCEN=${CM_SCENARIO:-ok}
 case $SCEN in ok|failed-once) MF=$SCEN;; timeout|overcharge) MF=$SCEN;; review) MF=ok; export CM_ODD_VISIT=${CM_ODD_VISIT:-4};; *) echo "unknown CM_SCENARIO $SCEN"; exit 2;; esac
 [ "$MF" = ok ] && MF=''
-OUTD=${CM_RUNS:-$PWD/../runs}/offline-$SCEN-$(date -u +%Y%m%dT%H%M%SZ); mkdir -p "$OUTD"
+OUTD=${CM_RUNS:-$PWD/../runs}/offline-$SCEN${CM_FORK_HSKTESTNET:+-hskfork}-$(date -u +%Y%m%dT%H%M%SZ); mkdir -p "$OUTD"
 PIDS=(); trap 'kill ${PIDS[@]} 2>/dev/null || true' EXIT
 RPC=http://127.0.0.1:8545
-anvil --port 8545 --chain-id 133 --silent & PIDS+=($!); sleep 2
+if [ -n "${CM_FORK_HSKTESTNET:-}" ]; then
+  # the REAL HSK-testnet USDC (Circle FiatToken proxy at 0x8FE3cB71...) on a LOCAL fork of HSK testnet: the stand-in HSP gateway
+  # settles through the real token code. Nothing is sent to HSK testnet: every tx goes to this local anvil.
+  anvil --fork-url https://testnet.hsk.xyz --port 8545 --silent & PIDS+=($!)
+  for i in $(seq 1 60); do cast chain-id --rpc-url $RPC >/dev/null 2>&1 && break; sleep 1; done
+  cast rpc anvil_nodeInfo --rpc-url $RPC >/dev/null 2>&1 && [ "$(cast chain-id --rpc-url $RPC)" = 133 ] || { echo "not a local fork of chain 133: stop"; exit 3; }
+else
+  anvil --port 8545 --chain-id 133 --silent & PIDS+=($!); sleep 2
+fi
 export CM_LOCAL_CHAIN_ID=133 HSP_NETWORK=hashkey-testnet
 # anvil's well-known public default test keys, used on the local anvil chain only
 K=(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d 0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a 0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6 0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a 0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba)
@@ -31,8 +41,14 @@ export HSP_MODE=qa HSP_PAYER_PK=${K[4]} AGENCY_PAYTO=0x58232CF98671Bc0Bd0E7aaA7c
 PAYER=$(cast wallet address --private-key ${K[4]})
 # the test USDC at HSP's HSK-testnet USDC address; 20 test USDC to the payer (like the QA payer's ~20 on Sepolia)
 USDC=0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6
-cast rpc anvil_setCode $USDC $(jq -r .deployedBytecode.object ../out/MockEIP3009.sol/MockEIP3009.json) --rpc-url $RPC > /dev/null
-cast send $USDC "mint(address,uint256)" $PAYER 20000000 --private-key ${K[0]} --rpc-url $RPC > /dev/null
+if [ -n "${CM_FORK_HSKTESTNET:-}" ]; then
+  [ "$(cast call $USDC 'name()(string)' --rpc-url $RPC)" = '"USD Coin"' ] || { echo "the forked USDC is not the real token"; exit 3; }
+  # fund the payer on the fork: FiatToken v2.2 keeps balances in the mapping at storage slot 9 (balanceAndBlacklistStates)
+  cast rpc anvil_setStorageAt $USDC $(cast index address $PAYER 9) 0x$(printf '%064x' 20000000) --rpc-url $RPC > /dev/null
+else
+  cast rpc anvil_setCode $USDC $(jq -r .deployedBytecode.object ../out/MockEIP3009.sol/MockEIP3009.json) --rpc-url $RPC > /dev/null
+  cast send $USDC "mint(address,uint256)" $PAYER 20000000 --private-key ${K[0]} --rpc-url $RPC > /dev/null
+fi
 [ "$(cast call $USDC 'balanceOf(address)(uint256)' $PAYER --rpc-url $RPC | awk '{print $1}')" = 20000000 ] || { echo "test USDC not installed"; exit 3; }
 [ -n "${CM_DROP_PAYTO:-}" ] && unset AGENCY_PAYTO
 export MOCK_HSP_PORT=8795 MOCK_HSP_SETTLE_S=${MOCK_HSP_SETTLE_S:-6} HSP_MCP_URL=http://127.0.0.1:8795/ MOCK_HSP_FAIL=$MF MOCK_HSP_RPC=$RPC MOCK_HSP_GATEWAY_PK=${K[5]}
@@ -47,7 +63,8 @@ node ${CM_SERVER:-server.mjs} > "$OUTD/server.log" 2>&1 & SV=$!; PIDS+=($SV)
 for i in $(seq 1 40); do curl -sf -o /dev/null http://127.0.0.1:8791/api/config && break; kill -0 $SV 2>/dev/null || break; sleep 0.25; done
 curl -sf -o /dev/null http://127.0.0.1:8791/api/config || { echo "SERVER DID NOT START ($OUTD/server.log):"; cat "$OUTD/server.log"; exit 3; }
 # the agency's own agent: watches PaymentSettled on chain, checks the transfer itself, acknowledges
-SETTLE_RPC=$RPC SETTLE_TOKEN=$USDC SETTLE_CHAIN_ID=133 AGENCY_FROM_BLOCK=0 AGENCY_WATCH_MS=2000 node agency-watch.mjs > "$OUTD/agency-watch.log" 2>&1 & AW=$!; PIDS+=($AW)
+FROMB=0; [ -n "${CM_FORK_HSKTESTNET:-}" ] && FROMB=$(cast block-number --rpc-url $RPC)   # a fork: scan from its head, not from genesis
+SETTLE_RPC=$RPC SETTLE_TOKEN=$USDC SETTLE_CHAIN_ID=133 AGENCY_FROM_BLOCK=$FROMB AGENCY_WATCH_MS=2000 node agency-watch.mjs > "$OUTD/agency-watch.log" 2>&1 & AW=$!; PIDS+=($AW)
 NOW=$(cast block latest -f timestamp --rpc-url $RPC)
 # each visit carries the carer's note (test/review-fixtures.mjs, re-timed to the visit); CM_ODD_VISIT=<n> gives visit n an odd note
 i=0; for c in "Tue visit" "Thu visit" "Fri visit" "Sat visit" "Sun visit"; do i=$((i+1)); T=$((NOW-7200+i*60)); K=$(node test/note.mjs key $i "${CM_ODD_VISIT:-0}"); node agency.mjs 1 $T 45000 "Ji-woo" "$c: lunch, medicines, a short walk" "$(node test/note.mjs $K $T)" >> "$OUTD/agency.log"; done

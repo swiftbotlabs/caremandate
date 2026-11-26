@@ -1,0 +1,237 @@
+{
+ "messages": [
+  {
+   "at": "2026-11-26T04:31:15.188Z",
+   "text": "Thursday's visit: approved by you, paid (45,000 won visit) via HSP: $0.03 test USDC on hashkey-testnet.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T04:30:59.966Z",
+   "text": "Thursday's visit: confirmed by Mum, paid (45,000 won visit) via HSP: $0.03 test USDC on hashkey-testnet.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T04:30:55.484Z",
+   "text": "Thursday's visit is the 4th this week. It waits for you: approve it on your page if you want it paid.",
+   "kind": "warn"
+  },
+  {
+   "at": "2026-11-26T04:30:48.403Z",
+   "text": "Thursday's visit: confirmed by Mum, paid (45,000 won visit) via HSP: $0.03 test USDC on hashkey-testnet.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T04:30:36.402Z",
+   "text": "Thursday's visit: confirmed by Mum, paid (45,000 won visit) via HSP: $0.03 test USDC on hashkey-testnet.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T04:30:31.995Z",
+   "text": "Thursday's visit: Mum says it did not happen. Nothing paid.",
+   "kind": "warn"
+  }
+ ],
+ "receipts": {
+  "0x690b899198109f08221cf8470a6f3d70d1a2ce577f03af15562469a5bb4dd42a": {
+   "mandateId": 1,
+   "visitTime": 1795660234,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Tue visit: lunch, medicines, a short walk",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 11:32, left 13:05. Cooked rice porridge for lunch and she ate most of it. Gave her morning pills with water. 25-minute walk to the park; she was in good spirits."
+  },
+  "0x3bef657a0963c0f3a58709ab7c126419a17bc60190749fdd7151be1ac527756a": {
+   "mandateId": 1,
+   "visitTime": 1795660294,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Thu visit: lunch, medicines, a short walk",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 11:29, left 13:01. Made soybean soup and rice for lunch. Medicines taken at 12:11 as on the chart. Short walk round the block, slow but steady."
+  },
+  "0xf5e201f5428f91e68e912f9dcd0965bdbfc4e524ca26c145918d2072a8406404": {
+   "mandateId": 1,
+   "visitTime": 1795660354,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Fri visit: lunch, medicines, a short walk",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 11:32, left 13:12. Lunch: steamed fish and greens. Pills given after lunch. We walked to the bench by the river and back."
+  },
+  "0x5197fc2427c5402c344061b5a6a62dd521e23070a84df4250de6503dc5372d67": {
+   "mandateId": 1,
+   "visitTime": 1795660414,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Sat visit: lunch, medicines, a short walk",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 11:35, left 13:08. Cooked rice porridge for lunch and she ate most of it. Gave her morning pills with water. 25-minute walk to the park; she was in good spirits."
+  },
+  "0x0d7b7f320cf6bdbafa77a5e8a382e696dd64f8489eeaf4ffac0b91475b400206": {
+   "mandateId": 1,
+   "visitTime": 1795660474,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Sun visit: lunch, medicines, a short walk",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 11:32, left 13:04. Made soybean soup and rice for lunch. Medicines taken at 12:14 as on the chart. Short walk round the block, slow but steady."
+  }
+ },
+ "payments": {
+  "1": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T04:30:24.571Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "33993",
+   "flowId": "MOCKHSP-6a2e9bca-5285-44a2-9661-7c7a83e85ed3",
+   "paymentRequestId": "CARE-PR-20261126043024-064730",
+   "paidRaw": "30002",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0x3bf3cd60db2f9206c8af93a99454faedb4ae4ce6e6b7fe1e1b99e8b8b81f4fbc",
+   "network": "hashkey-testnet",
+   "attributionVerified": true,
+   "token": "0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6",
+   "chainId": 133,
+   "retryable": false,
+   "settledAt": "2026-11-26T04:30:30.854Z",
+   "markPaidTx": "0xf1f3034389e5cd57266a7d62f0eee48a2168e7af1243fc3fe92f703541efd4e3"
+  },
+  "3": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T04:30:40.841Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "33993",
+   "flowId": "MOCKHSP-32b3c2bb-f3b7-456c-a626-5f83367f5d27",
+   "paymentRequestId": "CARE-PR-20261126043040-6362e3",
+   "paidRaw": "30002",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0xd3c2f55945fca80b390e4a4f88760006f32a749679aca56afc86a6eedd394204",
+   "network": "hashkey-testnet",
+   "attributionVerified": true,
+   "token": "0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6",
+   "chainId": 133,
+   "retryable": false,
+   "settledAt": "2026-11-26T04:30:47.424Z",
+   "markPaidTx": "0x098aa982012a33574a673da811ca96b84fb1e0aa4138751c9536864ce1865a96"
+  },
+  "4": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T04:30:48.006Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "33993",
+   "flowId": "MOCKHSP-57c82731-595b-4211-9a7a-9e8a2f0d5496",
+   "paymentRequestId": "CARE-PR-20261126043048-dd30e6",
+   "paidRaw": "30002",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0x7d6e67ca2732044b0efcadf8e20c9763f19aa85001e140b52edc531749be5352",
+   "network": "hashkey-testnet",
+   "attributionVerified": true,
+   "token": "0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6",
+   "chainId": 133,
+   "retryable": false,
+   "settledAt": "2026-11-26T04:30:54.723Z",
+   "markPaidTx": "0x0c998f30309538259592c07b56aa9a881140aad6334eb567c61fa40a45407b16"
+  },
+  "5": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T04:31:04.168Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "33993",
+   "flowId": "MOCKHSP-87370711-aa25-40eb-9ac3-00d2d157c070",
+   "paymentRequestId": "CARE-PR-20261126043104-18c932",
+   "paidRaw": "30002",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0xb89bd899b5c8f397fc97bc7d33dfce5b62ec4e60170119829added84bba41353",
+   "network": "hashkey-testnet",
+   "attributionVerified": true,
+   "token": "0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6",
+   "chainId": 133,
+   "retryable": false,
+   "settledAt": "2026-11-26T04:31:10.772Z",
+   "markPaidTx": "0x688457488e21a7c81520cad7654d3b2f0839c3c25661cb33eba84cb554b85cdf"
+  }
+ },
+ "reviews": {
+  "1": {
+   "at": "2026-11-26T04:30:24.567Z",
+   "decision": "pay",
+   "source": "rules",
+   "reasons": [],
+   "rules": [],
+   "facts": {
+    "arrive": 692,
+    "leave": 785,
+    "visitStart": "11:30",
+    "minutes": 93
+   },
+   "model": {
+    "error": "off"
+   }
+  },
+  "3": {
+   "at": "2026-11-26T04:30:40.838Z",
+   "decision": "pay",
+   "source": "rules",
+   "reasons": [],
+   "rules": [],
+   "facts": {
+    "arrive": 692,
+    "leave": 792,
+    "visitStart": "11:32",
+    "minutes": 100
+   },
+   "model": {
+    "error": "off"
+   }
+  },
+  "4": {
+   "at": "2026-11-26T04:30:48.005Z",
+   "decision": "pay",
+   "source": "rules",
+   "reasons": [],
+   "rules": [],
+   "facts": {
+    "arrive": 695,
+    "leave": 788,
+    "visitStart": "11:33",
+    "minutes": 93
+   },
+   "model": {
+    "error": "off"
+   }
+  },
+  "5": {
+   "at": "2026-11-26T04:31:04.167Z",
+   "decision": "pay",
+   "source": "rules",
+   "reasons": [],
+   "rules": [],
+   "facts": {
+    "arrive": 692,
+    "leave": 784,
+    "visitStart": "11:34",
+    "minutes": 92
+   },
+   "model": {
+    "error": "off"
+   }
+  }
+ }
+}
