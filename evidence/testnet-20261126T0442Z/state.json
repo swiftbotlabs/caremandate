@@ -1,0 +1,273 @@
+{
+ "messages": [
+  {
+   "at": "2026-11-26T04:56:18.193Z",
+   "text": "Thursday's visit: approved by you, paid (45,000 won visit) via HSP: $0.03 test USDC on sepolia.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T04:53:28.780Z",
+   "text": "Thursday's visit: confirmed by Mum; you checked the note, paid (45,000 won visit) via HSP: $0.03 test USDC on sepolia.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T04:50:33.278Z",
+   "text": "Thursday's visit: confirmed by Mum, paid (45,000 won visit) via HSP: $0.03 test USDC on sepolia.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T04:47:32.866Z",
+   "text": "Thursday's visit: confirmed by Mum, paid (45,000 won visit) via HSP: $0.03 test USDC on sepolia.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T04:45:16.779Z",
+   "text": "Thursday's visit is the 4th this week. It waits for you: approve it on your page if you want it paid.",
+   "kind": "warn"
+  },
+  {
+   "at": "2026-11-26T04:45:07.843Z",
+   "text": "Thursday's visit: Mum said it happened, but I am holding the payment until you look: The note says \"walk\" was not done. The note says the carer arrived at 15:37, but the visit was booked for 11:47. The visit lasted 20 minutes; the plan is at least 60. Nothing has been paid. \"Pay anyway\" on your page pays it.",
+   "kind": "warn"
+  },
+  {
+   "at": "2026-11-26T04:44:47.411Z",
+   "text": "Thursday's visit: Mum says it did not happen. Nothing paid.",
+   "kind": "warn"
+  }
+ ],
+ "receipts": {
+  "0xcb0d318dfa4f22df89849cdac143881e7ae660c5dbd1da4b1524758596be6a82": {
+   "mandateId": 1,
+   "visitTime": 1795661054,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Tue visit: lunch, medicines, a short walk",
+   "agency": "0xA8A49A6Ca872D54a8FD5FB121139De9bff62a48D",
+   "note": "Arrived 11:46, left 13:19. Cooked rice porridge for lunch and she ate most of it. Gave her morning pills with water. 25-minute walk to the park; she was in good spirits."
+  },
+  "0xbc7896fbd6d8ff3984ec95492fe1483a5af08be10ff9abd7fb17d45142ba8db5": {
+   "mandateId": 1,
+   "visitTime": 1795661114,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Thu visit: lunch, medicines, a short walk",
+   "agency": "0xA8A49A6Ca872D54a8FD5FB121139De9bff62a48D",
+   "note": "Arrived 11:43, left 13:15. Made soybean soup and rice for lunch. Medicines taken at 12:25 as on the chart. Short walk round the block, slow but steady."
+  },
+  "0xd7fd53a4dcd5e15b470696a036d3e7c1e89582361abe7a2afa2453fb44dc0dc2": {
+   "mandateId": 1,
+   "visitTime": 1795661174,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Fri visit: lunch, medicines, a short walk",
+   "agency": "0xA8A49A6Ca872D54a8FD5FB121139De9bff62a48D",
+   "note": "Arrived 11:46, left 13:26. Lunch: steamed fish and greens. Pills given after lunch. We walked to the bench by the river and back."
+  },
+  "0x25c2bc3b9f940bbe26c08b2a853cb87ebaad5bb93e8f714feaea9c87c9321187": {
+   "mandateId": 1,
+   "visitTime": 1795661234,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Sat visit: lunch, medicines, a short walk",
+   "agency": "0xA8A49A6Ca872D54a8FD5FB121139De9bff62a48D",
+   "note": "Arrived 15:37, left 15:57. Made lunch. She was tired so no walk today. Pills given."
+  },
+  "0xb71a9b82a067395d465b8030d5e0d94430fa7a703e17762fffd07e94600a0348": {
+   "mandateId": 1,
+   "visitTime": 1795661294,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Sun visit: lunch, medicines, a short walk",
+   "agency": "0xA8A49A6Ca872D54a8FD5FB121139De9bff62a48D",
+   "note": "Arrived 11:46, left 13:18. Made soybean soup and rice for lunch. Medicines taken at 12:28 as on the chart. Short walk round the block, slow but steady."
+  }
+ },
+ "payments": {
+  "1": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T04:44:37.962Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "35120",
+   "flowId": "777c276e-7fe2-4919-a672-2feca7b477a5",
+   "paymentRequestId": "CARE-PR-20261126044439-074b8b",
+   "paidRaw": "30007",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0x8cc66a4512ac8b3636c1576ea8254b3c7dfc1803164149dc18a87b69602bf444",
+   "network": "sepolia",
+   "attributionVerified": true,
+   "token": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+   "chainId": 11155111,
+   "retryable": false,
+   "settledAt": "2026-11-26T04:47:29.923Z",
+   "markPaidTx": "0x8c07452eaa2d5c3b25a572c9efdd4fabc6408988b104fed8bd06dd5618b3fc70"
+  },
+  "3": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T04:44:58.357Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "35120",
+   "flowId": "84476fc2-39cf-4e4b-a6e8-d5f0b598145a",
+   "paymentRequestId": "CARE-PR-20261126044734-48bd06",
+   "paidRaw": "30007",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0x19a948c7dd838358d3d878970799e44079bf40becd07b4d9cc1351a1ef3ad12b",
+   "network": "sepolia",
+   "attributionVerified": true,
+   "token": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+   "chainId": 11155111,
+   "retryable": false,
+   "settledAt": "2026-11-26T04:50:28.613Z",
+   "markPaidTx": "0xdd49019f7786adafbe7f6e9108e0b6bfeabe823bda0ab01a239f3aab5355c03e"
+  },
+  "4": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T04:45:26.343Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "35120",
+   "flowId": "bb492f49-938e-4d6e-ad8f-c068625dd15d",
+   "paymentRequestId": "CARE-PR-20261126045035-55ed99",
+   "paidRaw": "30007",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0xd243f0df310571276e508b6a74f4fdba6f258c70b2a71ad2999f05716d1d26f2",
+   "network": "sepolia",
+   "attributionVerified": true,
+   "token": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+   "chainId": 11155111,
+   "retryable": false,
+   "settledAt": "2026-11-26T04:53:25.781Z",
+   "markPaidTx": "0x104f29227701f052abdde035b06333e3338626c7491df91b3185f70c2a6c3e10"
+  },
+  "5": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T04:45:30.803Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "35120",
+   "flowId": "9c673e77-fbf1-418c-9787-377dc714b013",
+   "paymentRequestId": "CARE-PR-20261126045330-b85464",
+   "paidRaw": "30004",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0x9140938e76daf9ab3a430d108be39cf934094134f13f12f47418423d13a31a0c",
+   "network": "sepolia",
+   "attributionVerified": true,
+   "token": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+   "chainId": 11155111,
+   "retryable": false,
+   "settledAt": "2026-11-26T04:56:15.049Z",
+   "markPaidTx": "0xe9012b378f9e9e0b9e8431ff3094da1e67f485994284617418218024b95e22ef"
+  }
+ },
+ "reviews": {
+  "1": {
+   "at": "2026-11-26T04:44:37.369Z",
+   "decision": "pay",
+   "source": "model+rules",
+   "reasons": [],
+   "rules": [],
+   "facts": {
+    "arrive": 706,
+    "leave": 799,
+    "visitStart": "11:44",
+    "minutes": 93
+   },
+   "model": {
+    "name": "openai/gpt-oss-20b",
+    "decision": "pay",
+    "reasons": [],
+    "ms": 587
+   }
+  },
+  "3": {
+   "at": "2026-11-26T04:44:57.829Z",
+   "decision": "pay",
+   "source": "model+rules",
+   "reasons": [],
+   "rules": [],
+   "facts": {
+    "arrive": 706,
+    "leave": 806,
+    "visitStart": "11:46",
+    "minutes": 100
+   },
+   "model": {
+    "name": "openai/gpt-oss-20b",
+    "decision": "pay",
+    "reasons": [],
+    "ms": 519
+   }
+  },
+  "4": {
+   "at": "2026-11-26T04:45:07.512Z",
+   "decision": "hold",
+   "source": "model+rules",
+   "reasons": [
+    "The note says \"walk\" was not done.",
+    "The note says the carer arrived at 15:37, but the visit was booked for 11:47.",
+    "The visit lasted 20 minutes; the plan is at least 60.",
+    "Model: Visit too short",
+    "Model: No walk performed",
+    "Model: Agreed tasks incomplete"
+   ],
+   "rules": [
+    "missed_task",
+    "time_mismatch",
+    "short_visit"
+   ],
+   "facts": {
+    "arrive": 937,
+    "leave": 957,
+    "visitStart": "11:47",
+    "minutes": 20
+   },
+   "model": {
+    "name": "openai/gpt-oss-20b",
+    "decision": "hold",
+    "reasons": [
+     "Visit too short",
+     "No walk performed",
+     "Agreed tasks incomplete"
+    ],
+    "ms": 328
+   },
+   "released": {
+    "by": "mina",
+    "at": "2026-11-26T04:45:26.341Z"
+   }
+  },
+  "5": {
+   "at": "2026-11-26T04:45:29.444Z",
+   "decision": "pay",
+   "source": "model+rules",
+   "reasons": [],
+   "rules": [],
+   "facts": {
+    "arrive": 706,
+    "leave": 798,
+    "visitStart": "11:48",
+    "minutes": 92
+   },
+   "model": {
+    "name": "openai/gpt-oss-20b",
+    "decision": "pay",
+    "reasons": [],
+    "ms": 1356
+   }
+  }
+ }
+}

@@ -1,0 +1,4 @@
+{"t":"0.0","merchant":"Swift Bot Labs (CareMandate)","payer":"0x97ec2B82563BAd972FDb279e8709cB84eDFA86bA","payTo":"0x58232CF98671Bc0Bd0E7aaA7cd6adE9EdB2E64A6","dry":true}
+{"t":"2.3","step":"create_order","flowId":"e19c38c6-8387-43fd-aeb7-1e46c3ecc891","prId":"CARE-PR-20261126044303-b59551"}
+{"t":"3.2","step":"firewall_ok","flowId":"e19c38c6-8387-43fd-aeb7-1e46c3ecc891","raw":"10003","maxRaw":null,"network":"sepolia","token":"0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238"}
+{"t":"3.2","step":"dry_stop","value":"10003","to":"0x58232CF98671Bc0Bd0E7aaA7cd6adE9EdB2E64A6"}
