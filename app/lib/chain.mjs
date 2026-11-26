@@ -11,7 +11,7 @@ export const STATUS = ['None', 'Posted', 'Confirmed', 'Held', 'Paid', 'Rejected'
 export const CHAINS = {
   // the offline runs start anvil with --chain-id 133 (CM_LOCAL_CHAIN_ID) so the local chain is a faithful HSK-testnet stand-in
   local: { id: Number(process.env.CM_LOCAL_CHAIN_ID || 31337), name: 'anvil', rpc: process.env.CM_LOCAL_RPC || 'http://127.0.0.1:8545', explorer: null },
-  testnet: { id: 133, name: 'HashKey Chain Testnet', rpc: 'https://testnet.hsk.xyz', explorer: 'https://testnet-explorer.hsk.xyz' },
+  testnet: { id: 133, name: 'HashKey Chain Testnet', rpc: 'https://testnet.hsk.xyz', explorer: 'https://testnet-explorer.hskchain.net' },
   mainnet: { id: 177, name: 'HashKey Chain', rpc: process.env.CM_MAINNET_RPC || 'https://mainnet.hsk.xyz', explorer: 'https://hsk.blockscout.com' },   // CM_MAINNET_RPC: fork tests only
 };
 
