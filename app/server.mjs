@@ -119,11 +119,12 @@ async function reviewThenPay(vi, when, why) {
 }
 
 async function release({ visitId }) {
-  const st = load(); const r = (st.reviews || {})[visitId];
-  if (!r || r.decision !== 'hold' || r.released) throw new Error(`visit ${visitId}: no payment held by the note check`);
+  const held = (s) => { const r = (s.reviews || {})[visitId]; if (!r || r.decision !== 'hold' || r.released) throw new Error(`visit ${visitId}: no payment held by the note check`); return r; };
+  held(load());
   const vi = await visit(ctx, C, visitId);
   if (vi.status !== 'Confirmed') throw new Error(`visit ${visitId} is ${vi.status} on chain, not Confirmed`);
-  r.released = { by: 'mina', at: new Date().toISOString() }; save(st);
+  // re-read AFTER the await: another request (a review, an approval) may have saved state meanwhile; a stale copy would wipe it
+  const st = load(); held(st).released = { by: 'mina', at: new Date().toISOString() }; save(st);
   log({ event: 'review_released', visitId, by: 'mina' });
   return startPay(vi, day(vi.visitTime), 'confirmed by Mum; you checked the note');
 }
@@ -352,12 +353,13 @@ http.createServer(async (req, res) => {
   log({ event: 'start', port: Number(process.env.PORT || 8790), net: ctx.net, contract: C, hspMode: HSP_MODE, hspNetwork: HSP_NETWORK, payTo: process.env.AGENCY_PAYTO || '(mandate agency)', payer: hspPayer.account.address, review: process.env.REVIEW_OFF === '1' ? 'OFF (test)' : process.env.REVIEW_LLM_KEY ? 'model+rules ' + (process.env.REVIEW_LLM_MODEL || 'openai/gpt-oss-20b') : 'rules only', plan: PLAN });
   console.log('caremandate on :' + (process.env.PORT || 8790), ctx.net, C);
   // payments left mid-way by an earlier run: resume the submitted ones (query only); flag the rest, never re-sign them
-  const st = load(); let n = 0;
+  const st = load(); let n = 0; const toResume = [];
   for (const [id, p] of Object.entries(st.payments)) {
     if (p.status === 'retrying') { p.status = 'failed'; log({ event: 'pay_retry_pending', visitId: Number(id) }); continue; }   // Mina retries by hand after a restart
     if (p.status !== 'paying' && p.status !== 'unsettled') continue;
-    if (p.submitted && p.flowId) { n++; resume(Number(id)); }
+    if (p.submitted && p.flowId) { n++; toResume.push(Number(id)); }
     else if (p.status === 'paying') { p.status = 'failed'; p.error = p.flowId ? 'interrupted before submit (flow ' + p.flowId + '): check HSP before paying again' : 'interrupted before HSP'; if (p.flowId) p.submitted = true; log({ event: 'pay_interrupted', visitId: Number(id), flowId: p.flowId || null }); }
   }
   save(st); if (n) log({ event: 'resuming', count: n });
+  for (const id of toResume) resume(id);   // after the save, so a resume's own writes are never overwritten
 });
