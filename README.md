@@ -75,6 +75,18 @@ faucet, so the payer must be funded with it first. `CM_FORK_HSKTESTNET=1 bash ap
 HSK testnet and settles through the real HSK-testnet USDC contract (`evidence/offline-ok-hskfork-20261126T042925Z/`). Otherwise payments settle in Circle test USDC on Ethereum Sepolia. Every payment is reported
 under the team name `Swift Bot Labs (CareMandate)`.
 
+## What's real, what's test money, what's simulated
+| Part | In the published runs | Where to check |
+|---|---|---|
+| CareMandate contract | **Real**, on HSK Chain testnet (run) and HSK Chain **mainnet** (`0x1173…11c3`, source verified) | tx links on the record page |
+| Mum's Yes/No | **Real** EIP-712 signature from the tablet page's own key, checked on chain (`confirmBySig`) | `confirmTx` per visit |
+| HSP payments | **Real** HSP QA orders and settlements, paid in Circle **test** USDC on Ethereum Sepolia (no real-money value) | HSP flow id + Sepolia tx per visit |
+| Agency's receipt check | **Real**: its agent reads the settlement transfer itself, then `ackPaid` on chain | `ackTx` per visit |
+| Mina's note review | **Real**: rules always; a hosted model (`openai/gpt-oss-20b`, free tier) can add a hold, never lift one | `review` lines in `server.log` |
+| People and visits | **Simulated**: Mina, Mum, Ji-woo and the agency are test personas; the visits are scripted by `app/test/e2e-testnet.sh` | the script |
+| Won amounts | Mandate at real scale on mainnet (45,000 won); testnet runs at 1:1000 scale; the mainnet visit was a token 1,000 won | `setup.json`, `visit.json` |
+| HSK-testnet settlement | **Not yet**: works on a local fork of HSK testnet through the real USDC contract; waits on HSK-testnet USDC | `evidence/offline-ok-hskfork-*` |
+
 ## Status
 <!-- STATUS:BEGIN -->
 - Full run on **HSK Chain testnet with real HSP QA payments settling in Circle test USDC on Ethereum Sepolia** (26 Nov 2026, 04:43-04:56 UTC (13:43-13:56 KST); contract `0xe5d156e8d55d6895c5969f777891eeaf9bf07687`):
