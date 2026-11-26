@@ -1,0 +1,364 @@
+{
+ "messages": [
+  {
+   "at": "2026-11-26T07:47:19.617Z",
+   "text": "Thursday's visit: confirmed by Mum; you checked the note, paid (45,000 won visit) via HSP: $0.03 test USDC on sepolia.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T07:44:22.880Z",
+   "text": "Thursday's visit: approved by you, paid (45,000 won visit) via HSP: $0.03 test USDC on sepolia.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T07:41:25.965Z",
+   "text": "Thursday's visit: confirmed by Mum, paid (45,000 won visit) via HSP: $0.03 test USDC on sepolia.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T07:38:23.900Z",
+   "text": "Thursday's visit: confirmed by Mum, paid (45,000 won visit) via HSP: $0.03 test USDC on sepolia.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T07:35:57.639Z",
+   "text": "Thursday's visit is the 4th this week. It waits for you: approve it on your page if you want it paid.",
+   "kind": "warn"
+  },
+  {
+   "at": "2026-11-26T07:35:48.519Z",
+   "text": "Thursday's visit: Mum said it happened, but I am holding the payment until you look: The note says \"walk\" was not done. The note says the carer arrived at 18:28, but the visit was booked for 14:38. The visit lasted 20 minutes; the plan is at least 60. Nothing has been paid. \"Pay anyway\" on your page pays it.",
+   "kind": "warn"
+  },
+  {
+   "at": "2026-11-26T07:35:43.049Z",
+   "text": "Thursday's missed visit: the agency's agent offered a make-up on Thu 3 Dec, 09:00 to 10:30 (Korea time, 45,000 won). It fits your rules, so I accepted. It is paid only if Mum confirms it.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T07:35:35.267Z",
+   "text": "Thursday's missed visit: the agency's agent offered a make-up on Fri 27 Nov, 19:30 to 21:00. I declined: Mina's hours for visits are 09:00 to 18:00 Korea time; the slot is Fri 27 Nov, 19:30 to 21:00. That week already has 4 visits booked; Mina's limit is 3 a week.",
+   "kind": "info"
+  },
+  {
+   "at": "2026-11-26T07:35:24.432Z",
+   "text": "Thursday's visit: Mum says it did not happen. Nothing paid.",
+   "kind": "warn"
+  }
+ ],
+ "receipts": {
+  "0xac0aea72955ed6aca0ffaffe1c10d755cc9b6a2c3f7eca6375f775e710a9b170": {
+   "mandateId": 1,
+   "visitTime": 1795671326,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Tue visit: lunch, medicines, a short walk",
+   "agency": "0xA8A49A6Ca872D54a8FD5FB121139De9bff62a48D",
+   "note": "Arrived 14:37, left 16:10. Cooked rice porridge for lunch and she ate most of it. Gave her morning pills with water. 25-minute walk to the park; she was in good spirits."
+  },
+  "0x2b88f645ecb3b53013eceb6e0ef49ed2d6b978af4d3fbcdc2bfa55bc5743be14": {
+   "mandateId": 1,
+   "visitTime": 1795671386,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Thu visit: lunch, medicines, a short walk",
+   "agency": "0xA8A49A6Ca872D54a8FD5FB121139De9bff62a48D",
+   "note": "Arrived 14:34, left 16:06. Made soybean soup and rice for lunch. Medicines taken at 15:16 as on the chart. Short walk round the block, slow but steady."
+  },
+  "0x49fabdb987ad5aa2d8915dd93ec4ec79bdf4b3cc7c615a798455c974390f5927": {
+   "mandateId": 1,
+   "visitTime": 1795671446,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Fri visit: lunch, medicines, a short walk",
+   "agency": "0xA8A49A6Ca872D54a8FD5FB121139De9bff62a48D",
+   "note": "Arrived 14:37, left 16:17. Lunch: steamed fish and greens. Pills given after lunch. We walked to the bench by the river and back."
+  },
+  "0x4ca59dd70c260bf985884c3cf0fb5114b0c8589f66bdd3922894703894717c0e": {
+   "mandateId": 1,
+   "visitTime": 1795671506,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Sat visit: lunch, medicines, a short walk",
+   "agency": "0xA8A49A6Ca872D54a8FD5FB121139De9bff62a48D",
+   "note": "Arrived 18:28, left 18:48. Made lunch. She was tired so no walk today. Pills given."
+  },
+  "0x6b324d92a3dde2b3706dd5b3fd7616eb15c37ca39fb6dfaa20410e06e2f3b026": {
+   "mandateId": 1,
+   "visitTime": 1795671566,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Sun visit: lunch, medicines, a short walk",
+   "agency": "0xA8A49A6Ca872D54a8FD5FB121139De9bff62a48D",
+   "note": "Arrived 14:37, left 16:09. Made soybean soup and rice for lunch. Medicines taken at 15:19 as on the chart. Short walk round the block, slow but steady."
+  }
+ },
+ "payments": {
+  "1": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T07:35:15.669Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "35120",
+   "flowId": "af5701af-8023-4071-b721-108986fb822b",
+   "paymentRequestId": "CARE-PR-20261126073517-59a087",
+   "paidRaw": "30004",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0x89e0c881f218dbfeb6efb46af95344759abeecaeb02a96530b59b29f3f92fb32",
+   "network": "sepolia",
+   "attributionVerified": true,
+   "token": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+   "chainId": 11155111,
+   "retryable": false,
+   "settledAt": "2026-11-26T07:38:19.208Z",
+   "markPaidTx": "0x331614ed05a14e35d821fb80e5f0affb8b0c8c239a18be9c1c002838c3b6a774"
+  },
+  "3": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T07:35:32.926Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "35120",
+   "flowId": "b05c276e-a92d-4af8-8dc4-e17d4a2ae681",
+   "paymentRequestId": "CARE-PR-20261126073825-f06bde",
+   "paidRaw": "30004",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0x1f4038577c20a9aedd031ace2b19e4166e81ac9e07904f46ce9ff778402c9742",
+   "network": "sepolia",
+   "attributionVerified": true,
+   "token": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+   "chainId": 11155111,
+   "retryable": false,
+   "settledAt": "2026-11-26T07:41:20.842Z",
+   "markPaidTx": "0xc518c0f6726bb9c3d87bf07685e8b220d7b981d035015f576865db639e782ff0"
+  },
+  "4": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T07:36:10.669Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "35120",
+   "flowId": "3e296e54-0d86-4109-837b-4af45d708722",
+   "paymentRequestId": "CARE-PR-20261126074424-389f05",
+   "paidRaw": "30007",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0x67d9d2111236b162984b0e00573eddb5a7c3044181e3ef3a3f5685aeaa1a895f",
+   "network": "sepolia",
+   "attributionVerified": true,
+   "token": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+   "chainId": 11155111,
+   "retryable": false,
+   "settledAt": "2026-11-26T07:47:10.919Z",
+   "markPaidTx": "0xc672d5bff985078cec46d1f4cfdc7815682c220986b9a063745362f63d2f6b81"
+  },
+  "5": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T07:36:10.437Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "35120",
+   "flowId": "6ad96a07-2278-4276-ae41-3c41bca96f44",
+   "paymentRequestId": "CARE-PR-20261126074128-ded287",
+   "paidRaw": "30007",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0xa9a34e5d140b75cad1bf39a12d7a458f3a68dd0a5c2d450b7ea0741e83fb352c",
+   "network": "sepolia",
+   "attributionVerified": true,
+   "token": "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238",
+   "chainId": 11155111,
+   "retryable": false,
+   "settledAt": "2026-11-26T07:44:19.908Z",
+   "markPaidTx": "0x857e9e1b5818ae0bc666332b59652c7ed4ffbea2137e1a4695346f4de7de6347"
+  }
+ },
+ "reviews": {
+  "1": {
+   "at": "2026-11-26T07:35:08.743Z",
+   "decision": "pay",
+   "source": "model+rules",
+   "reasons": [],
+   "rules": [],
+   "facts": {
+    "arrive": 877,
+    "leave": 970,
+    "visitStart": "14:35",
+    "minutes": 93
+   },
+   "model": {
+    "name": "openai/gpt-oss-20b",
+    "decision": "pay",
+    "reasons": [],
+    "ms": 6920
+   }
+  },
+  "3": {
+   "at": "2026-11-26T07:35:32.389Z",
+   "decision": "pay",
+   "source": "model+rules",
+   "reasons": [],
+   "rules": [],
+   "facts": {
+    "arrive": 877,
+    "leave": 977,
+    "visitStart": "14:37",
+    "minutes": 100
+   },
+   "model": {
+    "name": "openai/gpt-oss-20b",
+    "decision": "pay",
+    "reasons": [],
+    "ms": 533
+   }
+  },
+  "4": {
+   "at": "2026-11-26T07:35:47.908Z",
+   "decision": "hold",
+   "source": "model+rules",
+   "reasons": [
+    "The note says \"walk\" was not done.",
+    "The note says the carer arrived at 18:28, but the visit was booked for 14:38.",
+    "The visit lasted 20 minutes; the plan is at least 60.",
+    "Model: Walk not completed",
+    "Model: Visit too short",
+    "Model: Agreed tasks incomplete"
+   ],
+   "rules": [
+    "missed_task",
+    "time_mismatch",
+    "short_visit"
+   ],
+   "facts": {
+    "arrive": 1108,
+    "leave": 1128,
+    "visitStart": "14:38",
+    "minutes": 20
+   },
+   "model": {
+    "name": "openai/gpt-oss-20b",
+    "decision": "hold",
+    "reasons": [
+     "Walk not completed",
+     "Visit too short",
+     "Agreed tasks incomplete"
+    ],
+    "ms": 608
+   },
+   "released": {
+    "by": "mina",
+    "at": "2026-11-26T07:36:10.666Z"
+   }
+  },
+  "5": {
+   "at": "2026-11-26T07:36:09.880Z",
+   "decision": "pay",
+   "source": "model+rules",
+   "reasons": [],
+   "rules": [],
+   "facts": {
+    "arrive": 877,
+    "leave": 969,
+    "visitStart": "14:39",
+    "minutes": 92
+   },
+   "model": {
+    "name": "openai/gpt-oss-20b",
+    "decision": "pay",
+    "reasons": [],
+    "ms": 554
+   }
+  }
+ },
+ "a2a": {
+  "decisions": [
+   {
+    "at": "2026-11-26T07:35:35.258Z",
+    "proposal": {
+     "mandateId": "1",
+     "missedVisitId": "2",
+     "slotStart": "1795775400",
+     "slotEnd": "1795780800",
+     "amount": "45000",
+     "carer": "Ji-woo",
+     "nonce": "1795678527634",
+     "expires": "1795700126"
+    },
+    "proposalSig": "0xa5db6b612993e2d3391a26aa3fbd2801e4c915935c87aff320d6d5fc0651e0021d0fb83dd6c2721a218a2658d25728edc0404c17ed68269ea234ac82cfbce1e91c",
+    "proposalHash": "0x176df7a508553dcbf7c1b3c169c17318897b239ba9c1eb432aef813e758f345e",
+    "decision": {
+     "proposal": "0x176df7a508553dcbf7c1b3c169c17318897b239ba9c1eb432aef813e758f345e",
+     "accept": false,
+     "reasons": "outside_hours,week_full",
+     "decidedAt": "1795678526"
+    },
+    "decisionSig": "0xf010f9eb593bbef95bd314998ca3a6c8e72e5fbe198c7c9737a39f7ad225f83c2e479b45c69de768299740b143b190bea14c0469095de0389a644f42736290c71b",
+    "decisionHash": "0x453bc5703eec74bf938a9e770c468c935ad32a2eb4a20805446968607c5951f2",
+    "accept": false,
+    "reasons": [
+     {
+      "code": "outside_hours",
+      "text": "Mina's hours for visits are 09:00 to 18:00 Korea time; the slot is Fri 27 Nov, 19:30 to 21:00."
+     },
+     {
+      "code": "week_full",
+      "text": "That week already has 4 visits booked; Mina's limit is 3 a week."
+     }
+    ],
+    "hints": {
+     "hours": [
+      9,
+      18
+     ],
+     "notBefore": 1796256000
+    },
+    "anchorTx": "0x352082251c27dd65129541338d705c3fcbb105e0a32623bcaafc0fc7a5100f2f",
+    "rulesOff": false,
+    "missedVisitId": 2
+   },
+   {
+    "at": "2026-11-26T07:35:43.031Z",
+    "proposal": {
+     "mandateId": "1",
+     "missedVisitId": "2",
+     "slotStart": "1796256000",
+     "slotEnd": "1796261400",
+     "amount": "45000",
+     "carer": "Ji-woo",
+     "nonce": "1795678535825",
+     "expires": "1795700134"
+    },
+    "proposalSig": "0x7979305a1d15c9ab5259d37fb1585da02489a9b9dc994c779639824c2f0a13d07333fa8e9884842b8acda5d86e055e1f81d5178e241f28f00a72d5daf4fafa481c",
+    "proposalHash": "0xca37a772dd23e0b9d61141a70e2d43698cc72718ab4ea805d782f9e0f361c271",
+    "decision": {
+     "proposal": "0xca37a772dd23e0b9d61141a70e2d43698cc72718ab4ea805d782f9e0f361c271",
+     "accept": true,
+     "reasons": "",
+     "decidedAt": "1795678536"
+    },
+    "decisionSig": "0x2005853d68930a8e577c7ee9d08ae60eba96b5fb622930fb488b6346f6415cd030e81ed88cd3ec0fd124efba3ab3ee2a7170ea9ebc58cd4adbbc496abb12fa901c",
+    "decisionHash": "0xa60fe1c4f301c43b99388ba8d11017ad96c698dedeb7763eca3c2732f26f6cd1",
+    "accept": true,
+    "reasons": [],
+    "hints": {},
+    "anchorTx": "0x3142446c8e8fbd67a94564c2eb68cc159f4c70ce60dafb1933d9af59d1d1a866",
+    "rulesOff": false,
+    "missedVisitId": 2
+   }
+  ],
+  "used": {},
+  "count": {
+   "2": 2
+  }
+ }
+}

@@ -89,14 +89,14 @@ under the team name `Swift Bot Labs (CareMandate)`.
 
 ## Status
 <!-- STATUS:BEGIN -->
-- Full run on **HSK Chain testnet with real HSP QA payments settling in Circle test USDC on Ethereum Sepolia** (26 Nov 2026, 04:43-04:56 UTC (13:43-13:56 KST); contract `0xe5d156e8d55d6895c5969f777891eeaf9bf07687`):
+- Full run on **HSK Chain testnet with real HSP QA payments settling in Circle test USDC on Ethereum Sepolia** (26 Nov 2026, 07:34-07:47 UTC (16:34-16:47 KST); contract `0xc9208fd8a7bc9601dc5f73d487c4f1468da6accf`):
   5 visits; Mum said Yes to 4 and No to 1; visits 1, 3, 4, 5 paid through HSP (each `payment-safe`, 0.12 test USDC in total, the
   settlement tx and the amount recorded by `markPaid` on HSK Chain); each payment acknowledged on chain by the agency's own agent after it
   checked the transfer itself; a 46,000-won visit refused by the contract (cap 45,000 won); mandate rate 743273 USDC units
   per 1,000,000 won (1345.4 KRW/USD, ECB reference rate via api.frankfurter.dev, 2026-11-25, testnet scale 1:1000).
   Mina's agent read every confirmed visit's note before paying (4 reviewed, 1 held for Mina: visit 4, paid only after she pressed Pay anyway). Record:
   https://apps.swiftbotlab.workers.dev/caremandate/ (built by `app/demo-page.mjs`, which re-checks every fact on chain first). Run files:
-  `evidence/testnet-20261126T0442Z/`. Failure modes and the note review (offline, one command each): `evidence/offline-*/gate.json`.
+  `evidence/testnet-20261126T0733Z/`. Failure modes and the note review (offline, one command each): `evidence/offline-*/gate.json`.
 - HSK Chain mainnet: CareMandate v2 at `0x1173198761ac17f8e40f97973a1e4ed0419a11c3` (deploy tx 0x637bdb78abf2b720f102e75a806f4435f2033ab237ce7c672419e6a10f48c03c, mandate tx 0xc3efa44c821848e6c75367660f9166a5ef4810cd205a22baf5b94b61a6579678; source verified: https://hsk.blockscout.com/address/0x1173198761ac17f8e40f97973a1e4ed0419a11c3), Mina's mandate at real scale (45,000 won a visit, 1345.4 KRW/USD on chain, at most $33.44 a visit); `evidence/mainnet-20261126T0242Z/`.
 - One visit cycle on HSK Chain mainnet (26 Nov 2026, 04:37-04:40 UTC (13:37-13:40 KST)): the agency posted a 1,000-won visit, Mum's tablet signed yes, Mina's agent read the note (pay, model+rules) and paid it through HSP QA (flow `6e669cc5-4e6d-4eaa-9779-46066064a7c3`, 0.74 test USDC on Ethereum Sepolia), `markPaid` recorded it and the agency's agent acknowledged it on chain; `evidence/mainnet-visit-20261126T0437Z/`.
 <!-- STATUS:END -->
