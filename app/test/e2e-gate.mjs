@@ -1,5 +1,5 @@
 // The gate of the end-to-end runs: decides PASS/FAIL from the run's records AND the chain (never from printed text).
-//   node test/e2e-gate.mjs <runDir> <scenario>     scenario: ok | failed-once | timeout | overcharge | testnet
+//   node test/e2e-gate.mjs <runDir> <scenario>     scenario: ok | failed-once | review | timeout | overcharge | testnet | testnet-review
 // Reads <runDir>/state.json, setup.json, agency.log, captrip.json, [mock-stats.json], [agency-watch.log]; re-reads every paid visit on
 // chain (CM_NET), and, when SETTLE_RPC + SETTLE_TOKEN are set, the settlement transfer on HSP's network. Exit 0 = PASS.
 import fs from 'node:fs';
@@ -54,7 +54,7 @@ for (const p of posts) {
   }
   if (rec) for (const a of rec.attempts || []) if (a.flowId) flowsSigned.add(a.flowId);
 }
-const want = { ok: [4, 0], 'failed-once': [4, 1], testnet: [4, null], timeout: [0, null], overcharge: [0, null] }[scen];
+const want = { ok: [4, 0], 'failed-once': [4, 1], review: [4, 0], testnet: [4, null], 'testnet-review': [4, null], timeout: [0, null], overcharge: [0, null] }[scen];
 must(want, 'known scenario');
 must(paid === want[0], `${paid} visits Paid on chain (want ${want[0]})`);
 if (want[0]) must(acked === paid, `agency acknowledged ${acked}/${paid} on chain by itself`);
@@ -65,7 +65,27 @@ if (scen === 'failed-once') {
   must(r && r.attempts.length === 1 && r.status === 'payment-safe' && r.attempts[0].flowId !== r.flowId, 'one visit failed once, retried automatically with a NEW flow, paid once');
   must(stats && stats.failedFlows === 1 && stats.transfers === 4 && stats.signaturesOk === 5, `mock: 1 failed flow, 5 signatures, 4 transfers (got ${JSON.stringify(stats)})`);
 }
-if (scen === 'ok') must(stats && stats.signaturesOk === 4 && stats.transfers === 4 && stats.submits === 4, `mock: 4 signatures, 4 submits, 4 transfers (got ${JSON.stringify(stats)})`);
+// 4. Mina's agent read every confirmed visit's note before paying (state.json reviews + server.log "review" lines)
+const reviews = st.reviews || {}, srvlog = jl('server.log');
+if (['ok', 'failed-once', 'review', 'testnet', 'testnet-review'].includes(scen)) {
+  for (const p of posts) {
+    const id = p.visitId, v = await visit(ctx, C, id), r = reviews[String(id)], rec = st.payments[String(id)];
+    if (v.status !== 'Paid') continue;
+    must(r && ['pay', 'hold'].includes(r.decision) && ['model+rules', 'rules'].includes(r.source), `visit ${id}: note reviewed before payment (${r ? r.decision + '/' + r.source : 'no review'})`);
+    if (r?.decision === 'hold') must(r.released?.by === 'mina' && rec && Date.parse(rec.startedAt) >= Date.parse(r.released.at), `visit ${id}: held by the agent, paid only after Mina released it`);
+    must(srvlog.some((x) => x.event === 'review' && x.visitId === id && x.decision === r?.decision), `visit ${id}: review decision in server.log`);
+  }
+}
+if (scen === 'review' || scen === 'testnet-review') {
+  const odd = String(process.env.CM_ODD_VISIT || 4), r = reviews[odd];
+  must(r && r.decision === 'hold' && (r.rules || []).length > 0, `visit ${odd} (odd note): HELD by the agent (got ${r ? r.decision + ' ' + (r.rules || []).join(',') : 'no review'})`);
+  must(r && r.released?.by === 'mina', `visit ${odd}: released only by Mina`);
+  const held = srvlog.find((x) => x.event === 'review' && String(x.visitId) === odd), rel = srvlog.find((x) => x.event === 'review_released' && String(x.visitId) === odd);
+  const firstPay = srvlog.find((x) => x.event === 'pay_queued' && String(x.visitId) === odd);
+  must(held && rel && firstPay && Date.parse(held.at) <= Date.parse(rel.at) && Date.parse(rel.at) <= Date.parse(firstPay.at), `visit ${odd}: review -> Mina's release -> first payment step, in that order (server.log)`);
+  must(Object.entries(reviews).filter(([k]) => k !== odd).every(([, x]) => x.decision === 'pay'), 'every other confirmed visit: paid without asking');
+}
+if (scen === 'ok' || scen === 'review') must(stats && stats.signaturesOk === 4 && stats.transfers === 4 && stats.submits === 4, `mock: 4 signatures, 4 submits, 4 transfers (got ${JSON.stringify(stats)})`);
 if (scen === 'timeout') {
   const r = st.payments['1'];
   must(r && r.status === 'unsettled' && r.kind === 'Unsettled' && r.retryable === false && r.flowId, 'visit 1: unsettled, not retryable, flow kept');

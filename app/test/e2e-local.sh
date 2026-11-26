@@ -14,5 +14,5 @@ OUT=$(KRW_PER_USD=1390 FX_SOURCE="fixed test rate (local run)" node setup.mjs $M
 export CM_CONTRACT=$(echo "$OUT" | python3 -c "import json,sys;print(json.load(sys.stdin)['contract'])") CM_MANDATE=1 HSP_MODE=mock PORT=8791
 node server.mjs & SV=$!; sleep 1.5
 NOW=$(cast block latest -f timestamp --rpc-url http://127.0.0.1:8545)
-i=0; for c in "Tue visit" "Thu visit" "Fri visit" "Sat visit" "Sun visit"; do i=$((i+1)); node agency.mjs 1 $((NOW-7200+i*60)) 45000 "Ji-woo" "$c: lunch, medicines, a short walk"; done
+i=0; for c in "Tue visit" "Thu visit" "Fri visit" "Sat visit" "Sun visit"; do i=$((i+1)); T=$((NOW-7200+i*60)); K=$(node test/note.mjs key $i "${CM_ODD_VISIT:-0}"); node agency.mjs 1 $T 45000 "Ji-woo" "$c: lunch, medicines, a short walk" "$(node test/note.mjs $K $T)"; done
 MUMPK=$MUMPK node test/mum-clicks.cjs

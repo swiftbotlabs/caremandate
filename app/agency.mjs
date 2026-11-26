@@ -1,11 +1,14 @@
 // The care agency's agent: posts one visit receipt to CareMandate. Usage:
-//   node agency.mjs <mandateId> <visitUnixTime> <amountWon> "<carer>" "<tasks>"      (env: CM_NET, CM_CONTRACT, AGENCY_PK, CM_STATE)
+//   node agency.mjs <mandateId> <visitUnixTime> <amountWon> "<carer>" "<tasks>" ["<visit note>"]   (env: CM_NET, CM_CONTRACT, AGENCY_PK, CM_STATE)
+// The visit note (what the carer wrote: times, what was done) is part of the receipt, so its hash on chain binds it: Mina's agent
+// reads it before paying and holds anything odd (lib/review.mjs).
 import fs from 'node:fs';
 import path from 'node:path';
 import { connect, send, receiptHash } from './lib/chain.mjs';
-const [mid, t, amt, carer, tasks] = process.argv.slice(2);
+const [mid, t, amt, carer, tasks, note] = process.argv.slice(2);
+if (note !== undefined && note.length > 2000) { console.error('visit note over 2000 characters'); process.exit(2); }
 const ctx = connect(), w = ctx.wallet(process.env.AGENCY_PK);
-const receipt = { mandateId: Number(mid), visitTime: Number(t), amountWon: Number(amt), carer, tasks, agency: w.account.address };
+const receipt = { mandateId: Number(mid), visitTime: Number(t), amountWon: Number(amt), carer, tasks, agency: w.account.address, ...(note !== undefined ? { note } : {}) };
 const h = receiptHash(receipt);
 const STATE = process.env.CM_STATE || path.join(path.dirname(new URL(import.meta.url).pathname), 'state.json');
 let st; try { st = JSON.parse(fs.readFileSync(STATE, 'utf8')); } catch { st = { messages: [], receipts: {}, payments: {} }; }

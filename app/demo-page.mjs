@@ -6,11 +6,15 @@
 // live against the contract), and list the offline failure-mode gates (DEMO_OFFLINE_GATES=<gate.json,...>). Any mismatch -> exit 1. The page holds no keys and cannot pay: it is static
 // HTML; the optional live.js only makes eth_call reads of visits(id).
 // Usage: node demo-page.mjs <runDir> <outDir>     (env DEMO_TAMPER=1 flips one flow id: the gate must then fail)
+// v3 (2026-11-26): times in UTC with Korea time in brackets; the family agent's note review per visit (state.json reviews, when the
+// run has them); DEMO_REVIEW_PROBE=<probe.json> (review-probe.mjs on the live model); DEMO_MAINNET=<evidence/mainnet-* dir> (the
+// mainnet deploy, re-read on HSK Chain mainnet) and DEMO_MAINNET_VISIT=<evidence/mainnet-visit-* dir> (a mainnet visit cycle, re-read).
 import fs from 'node:fs';
 import path from 'node:path';
 import { createPublicClient, http, keccak256, toBytes, toFunctionSelector, parseAbiItem, decodeEventLog } from 'viem';
 import { connect, visit, mandate, payment, CHAINS, ABI } from './lib/chain.mjs';
 import { maxPayRaw, recordLimitRaw, usdFor } from './lib/fx.mjs';
+import { NOTES } from './test/review-fixtures.mjs';
 
 const [runDir, outDir] = process.argv.slice(2);
 if (!runDir || !outDir) { console.error('usage: node demo-page.mjs <runDir> <outDir>'); process.exit(2); }
@@ -58,7 +62,10 @@ for (const a of agency) {
   must(rc && conf, `visit ${id}: receipt + Mum's answer present`);
   const p = state.payments[String(id)] || null;
   const ps = server.find((e) => e.event === 'pay_start' && e.visitId === id);
-  visits.push({ id, post: a.tx, receiptHash: a.receiptHash, rc, conf, appr, paid, p, ps });
+  const rv = (state.reviews || {})[String(id)] || null;
+  if (rv) { must(['pay', 'hold'].includes(rv.decision), `visit ${id}: review decision`); must(server.some((e) => e.event === 'review' && e.visitId === id && e.decision === rv.decision), `visit ${id}: review in server.log`);
+    if (rv.decision === 'hold' && p) must(rv.released && Date.parse(p.startedAt) >= Date.parse(rv.released.at), `visit ${id}: held visit paid only after Mina's release`); }
+  visits.push({ id, post: a.tx, receiptHash: a.receiptHash, rc, conf, appr, paid, p, ps, rv });
 }
 must(visits.length >= 1, '0 visits in agency.log');
 if (process.env.DEMO_TAMPER === '1') { const v = visits.find((x) => x.p); const f = '00000000-0000-4000-8000-000000000000'; v.p = { ...v.p, flowId: f }; v.paid = { ...v.paid, flowId: f }; }
@@ -141,14 +148,49 @@ if (PROBE) { must(UUID.test(PROBE.flowId), 'probe flow id'); PROBE.usdc = await 
 must(checks >= visits.length * 3, `too few checks (${checks})`);
 console.log(`chain checks passed: ${checks} (visits ${visits.length}, paid ${visits.filter((v) => v.p).length})`);
 
+const rgate = gates.find((g) => g.scenario === 'review'), hgates = gates.filter((g) => g.scenario !== 'review');
+// ---- the family agent's note review on the live model (optional evidence file from review-probe.mjs)
+let probe = null;
+if (process.env.DEMO_REVIEW_PROBE) {
+  probe = JSON.parse(fs.readFileSync(process.env.DEMO_REVIEW_PROBE, 'utf8'));
+  must(Array.isArray(probe.results) && probe.results.length >= 3 && probe.results.every((r) => r.decision === r.want && r.source === 'model+rules'), 'review probe: every note decided as expected by model + rules');
+}
+// ---- HSK Chain mainnet (optional): the deploy and a visit cycle, re-read on mainnet now
+let MAIN = null;
+if (process.env.DEMO_MAINNET) {
+  const md = JSON.parse(fs.readFileSync(path.join(process.env.DEMO_MAINNET, 'deploy.json'), 'utf8'));
+  const mn = connect('mainnet');
+  must(ADDR.test(md.contract) && (await mn.pub.getBytecode({ address: md.contract }) || '0x').length > 1000, 'mainnet: contract code present');
+  const mm = await mandate(mn, md.contract, md.mandateId);
+  must(String(mm.rawPerMillionWon) === md.fx.rawPerMillionWon && mm.perVisitCap === 45000n && mm.active, 'mainnet: mandate rate + cap as deployed');
+  await okTx(mn.pub, md.deployTx, 'mainnet deploy tx'); await okTx(mn.pub, md.tx, 'mainnet mandate tx');
+  MAIN = { ...md, m: mm, visit: null };
+  if (process.env.DEMO_MAINNET_VISIT) {
+    const mv = JSON.parse(fs.readFileSync(path.join(process.env.DEMO_MAINNET_VISIT, 'visit.json'), 'utf8'));
+    must(mv.contract.toLowerCase() === md.contract.toLowerCase() && Number.isInteger(mv.visitId), 'mainnet visit: same contract');
+    const on = await visit(mn, md.contract, mv.visitId), oc = await payment(mn, md.contract, mv.visitId);
+    must(on.status === 'Paid' && oc.agencyAck === true && String(oc.paidRaw) === String(mv.paidRaw) && oc.settlementTx.toLowerCase() === mv.settlementTx.toLowerCase(), 'mainnet visit: Paid + agency ack on chain = visit.json');
+    must(on.paymentRef.toLowerCase() === keccak256(toBytes(mv.flowId)).toLowerCase(), 'mainnet visit: paymentRef = keccak256(HSP flow id)');
+    for (const k of ['postTx', 'confirmTx', 'markPaidTx', 'ackTx']) await okTx(mn.pub, mv[k], 'mainnet ' + k);
+    mv.usdc = await usdcTransfer(mv.settlementTx, 'mainnet visit settlement');
+    must(mv.usdc === oc.paidRaw, 'mainnet visit: settlement transfer = paidRaw');
+    MAIN.visit = mv; checks += 4;
+  }
+}
+
 // ---- render
 const EX = CHAINS.testnet.explorer, SEP = SETTLE.ex;
 const hx = (h, n = 8) => `${h.slice(0, n)}…${h.slice(-6)}`;
 const txl = (h, base = EX) => `<a href="${base}/tx/${esc(h)}" rel="noopener">${esc(hx(h))}</a>`;
 const fmt = (d, opt) => new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Seoul', ...opt }).format(d);
-const kst = (iso) => fmt(new Date(iso), { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-const day = (sec) => fmt(new Date(sec * 1000), { weekday: 'long', day: 'numeric', month: 'short' });
-const hm = (sec) => fmt(new Date(sec * 1000), { hour: '2-digit', minute: '2-digit', hour12: false });
+const fmtU = (d, opt) => new Intl.DateTimeFormat('en-GB', { timeZone: 'UTC', ...opt }).format(d);
+const HMS = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }, HM = { hour: '2-digit', minute: '2-digit', hour12: false }, DM = { day: 'numeric', month: 'short' };
+// one time, UTC first and Korea time in brackets; the KST date is shown when it differs from the UTC date
+const at2 = (d, o = HMS) => { const du = fmtU(d, DM), dk = fmt(d, DM); return `${du}, ${fmtU(d, o)} UTC (${dk !== du ? dk + ', ' : ''}${fmt(d, o)} KST)`; };
+const tm2 = (iso) => `${fmtU(new Date(iso), HMS)} UTC (${fmt(new Date(iso), HMS)} KST)`;
+const visitAt2 = (sec) => at2(new Date(sec * 1000), HM);
+const span2 = (a, b) => { const A = new Date(a), B = new Date(b); const du = fmtU(A, { ...DM, year: 'numeric' }), dk = fmt(A, { ...DM, year: 'numeric' });
+  return `${du}, ${fmtU(A, HM)} to ${fmtU(B, HM)} UTC (${dk !== du ? dk + ', ' : ''}${fmt(A, HM)} to ${fmt(B, HM)} KST)`; };
 const usd = (v) => `$${(Number(v) / 1e6).toFixed(2)}`;
 const won = (n) => `${Number(n).toLocaleString('en-US')} won`;
 const secs = (a, b) => Math.round((new Date(b) - new Date(a)) / 1000);
@@ -162,19 +204,25 @@ const card = (v) => {
   const pill = yes ? '<span class="pill Paid">paid</span>' : '<span class="pill Rejected">not paid</span>';
   const rows = [
     ['Agency agent posts the visit', `${txl(v.post)}<span class="h">receipt ${esc(hx(v.receiptHash, 10))}</span>`],
-    ['Mum answers on her tablet', `<b class="${yes ? 'ok' : 'no'}">${yes ? 'Yes' : 'No'}</b> · ${txl(v.conf.tx)}<span class="h">${kst(v.conf.at)} KST, signed by the tablet, relayed by Mina's agent</span>`],
+    ['Mum answers on her tablet', `<b class="${yes ? 'ok' : 'no'}">${yes ? 'Yes' : 'No'}</b> · ${txl(v.conf.tx)}<span class="h">${tm2(v.conf.at)}, signed by the tablet, relayed by Mina's agent</span>`],
   ];
-  if (v.appr) rows.push(['4th visit this week: held', `Mina approved · ${txl(v.appr.tx)}<span class="h">${kst(v.appr.at)} KST</span>`]);
+  if (v.rc.note) rows.push(["Carer's note", `<span class="q">“${esc(v.rc.note)}”</span><span class="h">part of the receipt whose hash is on chain</span>`]);
+  if (v.rv) {
+    const src = v.rv.source === 'model+rules' ? `model (${esc(v.rv.model?.name || '')}) + rules` : 'rules (model unavailable)';
+    rows.push(["Mina's agent reads the note", v.rv.decision === 'pay' ? `<b class="ok">pay</b> · nothing unusual<span class="h">${src}; ${tm2(v.rv.at)}</span>`
+      : `<b class="no">held for Mina</b><ul class="h">${(v.rv.reasons || []).map((x) => `<li>${esc(x)}</li>`).join('')}</ul><span class="h">${src}; ${tm2(v.rv.at)}. ${v.rv.released ? `Mina read it and pressed Pay anyway at ${tm2(v.rv.released.at)}; nothing was ordered from HSP before that.` : 'Not paid.'}</span>`]);
+  }
+  if (v.appr) rows.push(['4th visit this week: held', `Mina approved · ${txl(v.appr.tx)}<span class="h">${tm2(v.appr.at)}</span>`]);
   if (yes) {
     rows.push(['HSP Agentic Payment', `<b class="ok">payment-safe</b>, ${secs(v.ps.at, v.p.settledAt)} s after the order was created<span class="h">flow <code>${esc(v.p.flowId)}</code></span><span class="h">request <code>${esc(v.p.paymentRequestId)}</code></span>`]);
     rows.push([`Money moved (${SETTLE.label})`, `${usd(v.usdc)} test USDC · ${txl(v.p.txHash, SEP)}${V2 ? `<span class="h">${esc(won(v.rc.amountWon))} at the mandate rate = at most ${usd(maxPayRaw(v.rc.amountWon, m.rawPerMillionWon))}; asked HSP for $${esc(usdFor(v.rc.amountWon, m.rawPerMillionWon))}</span>` : ''}`]);
     rows.push(['Paid, recorded on HSK Chain', `markPaid · ${txl(v.p.markPaidTx)}<span class="h">paymentRef = keccak256(flow id) = <code>${esc(hx(v.on.paymentRef, 10))}</code></span>`]);
-    if (v.ack) rows.push(["Agency's agent confirms receipt", `ackPaid · ${txl(v.ack.ackTx)}<span class="h">after checking the ${esc(SETTLE.label)} transfer itself; ${kst(v.ack.at)} KST</span>`]);
+    if (v.ack) rows.push(["Agency's agent confirms receipt", `ackPaid · ${txl(v.ack.ackTx)}<span class="h">after checking the ${esc(SETTLE.label)} transfer itself; ${tm2(v.ack.at)}</span>`]);
   } else {
     rows.push(['Payment', '<b class="no">none</b><span class="h">The contract marks the visit Rejected; it can never be paid.</span>']);
   }
   return `<article class="card visit" id="visit-${v.id}" data-visit="${v.id}" data-status="${esc(v.on.status)}" data-ref="${esc(v.on.paymentRef.toLowerCase())}">
-<div class="vh"><div><h3>Visit ${v.id}</h3><p class="small">${esc(day(v.rc.visitTime))}, ${esc(hm(v.rc.visitTime))} KST · ${esc(v.rc.carer)} · ${esc(won(v.rc.amountWon))}</p></div>${pill}</div>
+<div class="vh"><div><h3>Visit ${v.id}</h3><p class="small">${esc(visitAt2(v.rc.visitTime))} · ${esc(v.rc.carer)} · ${esc(won(v.rc.amountWon))}</p></div>${pill}</div>
 <dl>${rows.map(([k, val]) => `<div><dt>${k}</dt><dd>${val}</dd></div>`).join('')}</dl>
 <p class="live small" aria-live="polite"></p></article>`;
 };
@@ -185,7 +233,8 @@ const shots = [
   ['mum-done.png', "Mum's tablet when the payments are safe"],
   ['mina-held.png', "Mina's page: 4th visit waits for her Approve"],
   ['mina-after.png', "Mina's page at the end: 4 paid, 1 not paid"],
-];
+  ['mina-review-held.png', "Mina's page: her agent held a visit after reading the note"],
+].filter(([f]) => fs.existsSync(path.join(runDir, f)));
 const html = `<!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -198,7 +247,7 @@ const html = `<!doctype html>
 <h1>Pay mum's carer only for the visits that happened.</h1>
 <p class="sub">Mina works in Seoul. Her mother lives in Busan, and a carer visits her. Mum answers one question after each visit, and Mina's agent pays the agency's agent through HSP only for the visits Mum confirms.</p>
 
-<section class="card note"><p><b>This page is the record of one real run.</b> ${esc(fmt(new Date(runStart), { day: 'numeric', month: 'short', year: 'numeric' }))}, ${kst(runStart)} to ${kst(runEnd)} KST, on <b>HSK Chain testnet</b> with <b>real HSP QA payments</b> (HSP's QA environment settles in test USDC on ${esc(SETTLE.label)}). It is read-only: it holds no keys and cannot pay anyone.</p></section>
+<section class="card note"><p><b>This page is the record of one real run.</b> ${esc(span2(runStart, runEnd))}, on <b>HSK Chain testnet</b> with <b>real HSP QA payments</b> (HSP's QA environment settles in test USDC on ${esc(SETTLE.label)}). It is read-only: it holds no keys and cannot pay anyone.</p></section>
 
 ${FILM_OTHER ? `<section class="card"><h2>The first testnet run, filmed (71 s)</h2>` : `<section class="card"><h2>The run in 71 seconds</h2>`}<video controls preload="none" playsinline width="1920" height="1080" poster="poster.jpg" src="caremandate-demo.mp4"></video><p class="small">Captions only, no sound. ${FILM_OTHER ? `Filmed on an earlier run (<code>${esc(FILM_OTHER)}</code>, before the payment-record, cap and agency-receipt features); the record below is of this run. ` : ''}<a href="caremandate-demo.mp4">Open the video file</a>.</p></section>
 
@@ -212,6 +261,10 @@ ${V2 ? `<div><dt>Won to test USDC, on chain</dt><dd>${esc(String(m.rawPerMillion
 <div><dt>Over the cap: refused</dt><dd><b class="no">${esc(won(trip.amountWon))} visit refused</b> by the contract (<code>${esc(trip.reason)}</code>); it never became a visit<span class="h">Re-checked when this page was built: the agency posting ${esc(won(trip.amountWon))} to this contract still reverts.</span></dd></div>` : ''}</dl>
 <p class="small">The contract holds no money: HSP moves it. The contract decides what may be paid, and records each HSP payment against its visit.</p></section>
 
+${probe ? `<section class="card"><h2>Mina's agent reads every note</h2><p class="small">Mum's yes says the carer came; the note says what happened. Before it pays, Mina's agent reads the carer's note against her care plan (lunch, medicines, a walk; at least 60 minutes; arrival near the booked time). Rules always run; a language model (${esc(probe.model)}, free tier) reads the note too and can only add a hold, never lift one. The note is untrusted text written by the other side. A held visit stays unpaid, nothing is ordered from HSP, and Mina sees why and decides. The live model's answers, ${esc(at2(new Date(probe.at), HM))}:</p>
+<dl>${probe.results.map((r) => `<div><dt>${r.decision === 'pay' ? '<b class="ok">pay</b>' : '<b class="no">hold</b>'}</dt><dd><span class="q">“${esc(NOTES[r.note] || r.note)}”</span><span class="h">rules: ${r.rules.length ? esc(r.rules.join(', ')) : 'nothing'}${r.model?.reasons?.length ? ` · model: ${esc(r.model.reasons.join('; '))}` : ' · model: pay'}</span></dd></div>`).join('')}</dl>
+${rgate ? `<p class="small"><b class="ok">PASS</b>, ${rgate.checks} checks: an offline end-to-end run (<code>CM_SCENARIO=review bash app/test/e2e-offline-qa.sh</code>) where Mum says yes to a visit whose note says 20 minutes, the wrong time and no walk. The agent held it; HSP was asked for nothing until Mina pressed Pay anyway. With the check switched off (<code>REVIEW_OFF=1</code>) the same run pays it unread and the gate fails.</p>` : ''}</section>` : ''}
+
 <h2 class="sec">Every visit</h2>
 ${visits.map(card).join('\n')}
 
@@ -220,8 +273,14 @@ ${visits.map(card).join('\n')}
 
 ${PROBE ? `<section class="card"><h2>First real HSP payment</h2><p>Before the full run, one standalone HSP QA payment: flow <code>${esc(PROBE.flowId)}</code>, request <code>${esc(PROBE.prId)}</code>, ${usd(PROBE.usdc)} test USDC, <b class="ok">payment-safe</b> · ${txl(PROBE.txHash, SEP)}</p></section>` : ''}
 
-${gates.length ? `<section class="card"><h2>When HSP fails</h2><p class="small">Offline end-to-end tests (local chain, a stand-in HSP that settles real EIP-3009 transfers), run from the repo with <code>CM_SCENARIO=&lt;name&gt; bash app/test/e2e-offline-qa.sh</code>. In each, Mum's yes leaves the visit <b>Confirmed and unpaid</b> on chain with a PaymentIssue record, both pages say so, and nothing is ever paid twice.</p>
-<dl>${gates.map((g) => `<div><dt>${esc({ 'failed-once': 'HSP payment-failed, then an automatic retry', timeout: 'HSP never confirms (timeout)', overcharge: 'HSP quotes more than the mandate', ok: 'All payments settle' }[g.scenario] || g.scenario)}</dt><dd><b class="ok">PASS</b>, ${g.checks} checks · paid ${g.paid}, issues recorded on chain ${g.issues}<span class="h">${esc({ 'failed-once': 'The first flow fails with no money moved; a new flow pays the visit once. 5 signatures, 4 transfers.', timeout: 'The flow stays unsettled; the server keeps querying the same flow and never signs or submits again.', overcharge: 'The signing firewall refuses before anything is signed; Mina can retry by hand.', ok: '4 transfers, 4 agency acknowledgements.' }[g.scenario] || '')}</span></dd></div>`).join('')}</dl></section>` : ''}
+${hgates.length ? `<section class="card"><h2>When HSP fails</h2><p class="small">Offline end-to-end tests (local chain, a stand-in HSP that settles real EIP-3009 transfers), run from the repo with <code>CM_SCENARIO=&lt;name&gt; bash app/test/e2e-offline-qa.sh</code>. In each, Mum's yes leaves the visit <b>Confirmed and unpaid</b> on chain with a PaymentIssue record, both pages say so, and nothing is ever paid twice.</p>
+<dl>${hgates.map((g) => `<div><dt>${esc({ 'failed-once': 'HSP payment-failed, then an automatic retry', timeout: 'HSP never confirms (timeout)', overcharge: 'HSP quotes more than the mandate', ok: 'All payments settle', review: 'An odd visit note: held for Mina' }[g.scenario] || g.scenario)}</dt><dd><b class="ok">PASS</b>, ${g.checks} checks · paid ${g.paid}, issues recorded on chain ${g.issues}<span class="h">${esc({ 'failed-once': 'The first flow fails with no money moved; a new flow pays the visit once. 5 signatures, 4 transfers.', timeout: 'The flow stays unsettled; the server keeps querying the same flow and never signs or submits again.', overcharge: 'The signing firewall refuses before anything is signed; Mina can retry by hand.', ok: '4 transfers, 4 agency acknowledgements.', review: 'Mum says yes, but the note says 20 minutes, the wrong time and no walk: the agent orders nothing from HSP until Mina presses Pay anyway. With the check switched off the same run pays it unread and the gate fails.' }[g.scenario] || '')}</span></dd></div>`).join('')}</dl></section>` : ''}
+
+${MAIN ? `<section class="card"><h2>HSK Chain mainnet</h2><dl>
+<div><dt>Contract (HSK Chain mainnet, source verified)</dt><dd><a href="${CHAINS.mainnet.explorer}/address/${esc(MAIN.contract)}" rel="noopener"><code>${esc(MAIN.contract)}</code></a></dd></div>
+<div><dt>Mina's mandate, real scale</dt><dd><a href="${CHAINS.mainnet.explorer}/tx/${esc(MAIN.tx)}" rel="noopener">${esc(hx(MAIN.tx))}</a><span class="h">45,000 won a visit, 3 a week; ${esc(String(MAIN.fx.krwPerUsd))} won per dollar (${esc(MAIN.fx.date)}) stored on chain: at most $${esc(MAIN.fx.capUsd)} a visit</span></dd></div>
+${MAIN.visit ? `<div><dt>One visit, end to end on mainnet</dt><dd><b class="ok">Paid</b> · post <a href="${CHAINS.mainnet.explorer}/tx/${esc(MAIN.visit.postTx)}" rel="noopener">${esc(hx(MAIN.visit.postTx))}</a> · Mum's yes <a href="${CHAINS.mainnet.explorer}/tx/${esc(MAIN.visit.confirmTx)}" rel="noopener">${esc(hx(MAIN.visit.confirmTx))}</a> · markPaid <a href="${CHAINS.mainnet.explorer}/tx/${esc(MAIN.visit.markPaidTx)}" rel="noopener">${esc(hx(MAIN.visit.markPaidTx))}</a> · agency ack <a href="${CHAINS.mainnet.explorer}/tx/${esc(MAIN.visit.ackTx)}" rel="noopener">${esc(hx(MAIN.visit.ackTx))}</a><span class="h">${esc(won(MAIN.visit.amountWon))} visit at the mandate rate; HSP flow <code>${esc(MAIN.visit.flowId)}</code> settled ${usd(MAIN.visit.usdc)} in HSP QA test USDC on ${esc(MAIN.visit.settleLabel || 'Ethereum Sepolia')} (${txl(MAIN.visit.settlementTx, SETTLE.ex)}); ${esc(tm2(MAIN.visit.at))}</span></dd></div>` : ''}
+</dl></section>` : ''}
 
 <section class="card"><h2>Check it yourself</h2>
 <p class="small">Every link above opens a public explorer. This button reads <code>visits(id)</code> from the contract right now (HSK Chain testnet RPC, read-only) and compares each status and payment reference with this page.</p>
@@ -229,7 +288,7 @@ ${gates.length ? `<section class="card"><h2>When HSP fails</h2><p class="small">
 <noscript><p class="small">The check needs JavaScript; the explorer links work without it.</p></noscript>
 <p id="checkout" class="small" aria-live="polite"></p></section>
 
-<footer class="small"><p>Code: <a href="https://github.com/swiftbotlabs/caremandate" rel="noopener">github.com/swiftbotlabs/caremandate</a> · Built by Swift Bot Labs for HSK Chain Horizon · Seoul. Times are Korea time (KST). Mainnet: the official rules say "Winning teams must deploy their projects on HSK Chain mainnet to claim a prize" and "Teams selected for the demo must deploy their smart contracts to HSK Chain Mainnet" (<a href="https://dorahacks.io/hackathon/hskchainseoul" rel="noopener">DoraHacks HSK Chain Seoul</a>, Prizes and Submission Requirements); the mainnet deploy is rehearsed on a fork of HSK Chain mainnet (chain 177) and runs when we are selected.</p>
+<footer class="small"><p>Code: <a href="https://github.com/swiftbotlabs/caremandate" rel="noopener">github.com/swiftbotlabs/caremandate</a> · Built by Swift Bot Labs for HSK Chain Horizon · Seoul. Times are UTC, with Korea time (KST, UTC+9) in brackets. ${MAIN ? `Mainnet: CareMandate is deployed on HSK Chain mainnet (above), re-read when this page was built.` : 'Mainnet: rehearsed on a fork of HSK Chain mainnet (chain 177).'}</p>
 <p>All ${checks} on-chain facts on this page were re-checked against HSK Chain testnet${HSPNET === 'sepolia' ? ' and Ethereum Sepolia' : ''} when it was built.</p></footer>
 </main><script src="live.js" defer></script></body></html>
 `;
@@ -254,6 +313,7 @@ h2{font-size:19px;margin:0 0 10px}h2.sec{margin:26px 0 12px}h3{font-size:18px;ma
 dl{margin:0}dl>div{padding:10px 0;border-top:1px solid var(--line)}dl>div:first-child{border-top:0}
 dt{font-size:13px;font-weight:700;color:var(--soft);margin-bottom:2px}dd{margin:0;overflow-wrap:anywhere}
 .h{display:block;font-size:13px;color:var(--soft)}
+.q{font-style:italic;overflow-wrap:anywhere} ul.h{margin:4px 0 4px 18px;padding:0}
 b.ok{color:var(--ok)}b.no{color:var(--no)}
 .small{font-size:14px;color:var(--soft)}a{color:var(--link)}
 code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;word-break:break-all}

@@ -18,6 +18,7 @@ h2{font-size:19px;margin:0 0 10px}h2.sec{margin:26px 0 12px}h3{font-size:18px;ma
 dl{margin:0}dl>div{padding:10px 0;border-top:1px solid var(--line)}dl>div:first-child{border-top:0}
 dt{font-size:13px;font-weight:700;color:var(--soft);margin-bottom:2px}dd{margin:0;overflow-wrap:anywhere}
 .h{display:block;font-size:13px;color:var(--soft)}
+.q{font-style:italic;overflow-wrap:anywhere} ul.h{margin:4px 0 4px 18px;padding:0}
 b.ok{color:var(--ok)}b.no{color:var(--no)}
 .small{font-size:14px;color:var(--soft)}a{color:var(--link)}
 code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;word-break:break-all}

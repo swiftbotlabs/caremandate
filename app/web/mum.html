@@ -33,6 +33,7 @@ async function show() {
       const res = await fetch('/api/confirm', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ visitId: v.id, happened: ok, ...s }) });
       const out = await res.json().catch(() => ({}));
       q.innerHTML = res.ok ? `<p class="done">${ok ? 'Thank you. Mina will see it.' : 'Thank you. Nothing will be paid for this one.'}</p>` : '<p class="who">That did not go through. Please try again in a minute.</p>';
+      if (res.ok && out.reviewHeld) { const box = document.getElementById('pay'), line = document.createElement('p'); line.className = 'pay-warn'; line.textContent = `Mina will look at the ${day(v.visitTime)} ${time(v.visitTime)} visit note before it is paid.`; box.appendChild(line); }
       if (res.ok && out.paying) { paying.set(v.id, { when: `${day(v.visitTime)} ${time(v.visitTime)}`, carer: r.carer || 'your carer' }); tick(); }
       setTimeout(show, 2500);
     };

@@ -25,3 +25,5 @@ code { font-size:12px; word-break:break-all; }
 .pay p { font-size:18px; margin:10px 0; padding:10px 12px; border-radius:10px; }
 .pay .pay-wait { color:var(--wait); background:var(--waitbg); } .pay .pay-ok { color:var(--ok); background:var(--okbg); font-weight:650; } .pay .pay-warn { color:var(--no); background:var(--nobg); }
 .ack { color:var(--ok); } .warn { color:var(--no); }
+.note { color:var(--soft); font-style:italic; overflow-wrap:anywhere; } .held { margin-top:4px; } .held ul { margin:4px 0 4px 18px; padding:0; }
+.release { font:inherit; font-weight:700; border:0; border-radius:10px; padding:8px 12px; background:var(--no); color:#fff; cursor:pointer; white-space:nowrap; }

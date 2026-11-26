@@ -1,0 +1,254 @@
+{
+ "messages": [
+  {
+   "at": "2026-11-26T04:00:49.087Z",
+   "text": "Thursday's visit: approved by you, paid (45,000 won visit) via HSP: $0.03 test USDC on hashkey-testnet.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T04:00:38.991Z",
+   "text": "Thursday's visit: confirmed by Mum; you checked the note, paid (45,000 won visit) via HSP: $0.03 test USDC on hashkey-testnet.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T04:00:25.733Z",
+   "text": "Thursday's visit is the 4th this week. It waits for you: approve it on your page if you want it paid.",
+   "kind": "warn"
+  },
+  {
+   "at": "2026-11-26T04:00:21.691Z",
+   "text": "Thursday's visit: confirmed by Mum, paid (45,000 won visit) via HSP: $0.03 test USDC on hashkey-testnet.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T04:00:17.663Z",
+   "text": "Thursday's visit: Mum said it happened, but I am holding the payment until you look: The note says \"walk\" was not done. The note says the carer arrived at 14:52, but the visit was booked for 11:02. The visit lasted 20 minutes; the plan is at least 60. Nothing has been paid. \"Pay anyway\" on your page pays it.",
+   "kind": "warn"
+  },
+  {
+   "at": "2026-11-26T04:00:06.695Z",
+   "text": "Thursday's visit: confirmed by Mum, paid (45,000 won visit) via HSP: $0.03 test USDC on hashkey-testnet.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T04:00:02.659Z",
+   "text": "Thursday's visit: Mum says it did not happen. Nothing paid.",
+   "kind": "warn"
+  }
+ ],
+ "receipts": {
+  "0x24c8c1df7c3f4218b9daa56a65dcd57a5940eab16d703fa54100df0c679c2ea4": {
+   "mandateId": 1,
+   "visitTime": 1795658399,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Tue visit: lunch, medicines, a short walk",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 11:01, left 12:34. Cooked rice porridge for lunch and she ate most of it. Gave her morning pills with water. 25-minute walk to the park; she was in good spirits."
+  },
+  "0xbe36c77b119c45447ae272c0e82986f73153efcc95a3a5835679f36dcac46ca7": {
+   "mandateId": 1,
+   "visitTime": 1795658459,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Thu visit: lunch, medicines, a short walk",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 10:58, left 12:30. Made soybean soup and rice for lunch. Medicines taken at 11:40 as on the chart. Short walk round the block, slow but steady."
+  },
+  "0x705c292d7448d43bd6bd80ed2c866d876566fcf66aef9613f7ac435d419df3fb": {
+   "mandateId": 1,
+   "visitTime": 1795658519,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Fri visit: lunch, medicines, a short walk",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 11:01, left 12:41. Lunch: steamed fish and greens. Pills given after lunch. We walked to the bench by the river and back."
+  },
+  "0xeac5f3ad8f9c38d621e3d1a68ed9f8e53e619fcbc77fabb74b307a5a1b490199": {
+   "mandateId": 1,
+   "visitTime": 1795658579,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Sat visit: lunch, medicines, a short walk",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 14:52, left 15:12. Made lunch. She was tired so no walk today. Pills given."
+  },
+  "0xeb1e7983dc0f308404ebd94a992e4fa4c83944f81be0134042b7a40eeeef5e64": {
+   "mandateId": 1,
+   "visitTime": 1795658639,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Sun visit: lunch, medicines, a short walk",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 11:01, left 12:33. Made soybean soup and rice for lunch. Medicines taken at 11:43 as on the chart. Short walk round the block, slow but steady."
+  }
+ },
+ "payments": {
+  "1": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T03:59:55.624Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "33993",
+   "flowId": "MOCKHSP-69c97bad-1640-41a5-9aac-c0445aa4a777",
+   "paymentRequestId": "CARE-PR-20261126035955-81cb4b",
+   "paidRaw": "30002",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0xa67def9268e90393d439f075ee022ca3f78799fdf85207a611964812d58fa13a",
+   "network": "hashkey-testnet",
+   "attributionVerified": true,
+   "token": "0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6",
+   "chainId": 133,
+   "retryable": false,
+   "settledAt": "2026-11-26T04:00:01.759Z",
+   "markPaidTx": "0xb75521463d5b91b49f1a1a46dc386104ee6a22c4a648752842a0f69e99c0d948"
+  },
+  "3": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T04:00:10.725Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "33993",
+   "flowId": "MOCKHSP-4c331c39-3d43-4119-99fe-177d965b895f",
+   "paymentRequestId": "CARE-PR-20261126040010-96f76d",
+   "paidRaw": "30002",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0xefdd707ace70e7219a5667e7c6266aa5c95d874bd8124233de7fe07825a02dff",
+   "network": "hashkey-testnet",
+   "attributionVerified": true,
+   "token": "0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6",
+   "chainId": 133,
+   "retryable": false,
+   "settledAt": "2026-11-26T04:00:16.804Z",
+   "markPaidTx": "0x21b5b61d2ad9bdf0dd5c5ed20a4e555525f28b5f8bbf9358376ef480134c8eb8"
+  },
+  "4": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T04:00:28.923Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "33993",
+   "flowId": "MOCKHSP-4fee371e-3ad7-4a3c-ae1c-8d9c859c3c94",
+   "paymentRequestId": "CARE-PR-20261126040028-889799",
+   "paidRaw": "30002",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0x523350b425678142fde8dcb4aa9811a12908aaabb6d0d019c45a5f048fa4f184",
+   "network": "hashkey-testnet",
+   "attributionVerified": true,
+   "token": "0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6",
+   "chainId": 133,
+   "retryable": false,
+   "settledAt": "2026-11-26T04:00:34.965Z",
+   "markPaidTx": "0x5c48f2397e9dd3dab1d9a19afb39a3aa23e921f7704048f348ca9bd9bf21fd82"
+  },
+  "5": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T04:00:32.810Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "33993",
+   "flowId": "MOCKHSP-2e8867d6-b3b3-471a-a5bc-5b2f0a71cc7a",
+   "paymentRequestId": "CARE-PR-20261126040039-d53aa4",
+   "paidRaw": "30002",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0x6b81e89ddc681140432cbf38272ec0da0a9012153ec9f4421dc09a51a48bbffa",
+   "network": "hashkey-testnet",
+   "attributionVerified": true,
+   "token": "0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6",
+   "chainId": 133,
+   "retryable": false,
+   "settledAt": "2026-11-26T04:00:45.063Z",
+   "markPaidTx": "0x6e444de0f15fb2b621ca6cef7dced0dfacf29386d1cfada1573d710797b50218"
+  }
+ },
+ "reviews": {
+  "1": {
+   "at": "2026-11-26T03:59:55.622Z",
+   "decision": "pay",
+   "source": "rules",
+   "reasons": [],
+   "rules": [],
+   "facts": {
+    "arrive": 661,
+    "leave": 754,
+    "visitStart": "10:59",
+    "minutes": 93
+   },
+   "model": {
+    "error": "off"
+   }
+  },
+  "3": {
+   "at": "2026-11-26T04:00:10.723Z",
+   "decision": "pay",
+   "source": "rules",
+   "reasons": [],
+   "rules": [],
+   "facts": {
+    "arrive": 661,
+    "leave": 761,
+    "visitStart": "11:01",
+    "minutes": 100
+   },
+   "model": {
+    "error": "off"
+   }
+  },
+  "4": {
+   "at": "2026-11-26T04:00:17.661Z",
+   "decision": "hold",
+   "source": "rules",
+   "reasons": [
+    "The note says \"walk\" was not done.",
+    "The note says the carer arrived at 14:52, but the visit was booked for 11:02.",
+    "The visit lasted 20 minutes; the plan is at least 60."
+   ],
+   "rules": [
+    "missed_task",
+    "time_mismatch",
+    "short_visit"
+   ],
+   "facts": {
+    "arrive": 892,
+    "leave": 912,
+    "visitStart": "11:02",
+    "minutes": 20
+   },
+   "model": {
+    "error": "off"
+   },
+   "released": {
+    "by": "mina",
+    "at": "2026-11-26T04:00:28.922Z"
+   }
+  },
+  "5": {
+   "at": "2026-11-26T04:00:32.808Z",
+   "decision": "pay",
+   "source": "rules",
+   "reasons": [],
+   "rules": [],
+   "facts": {
+    "arrive": 661,
+    "leave": 753,
+    "visitStart": "11:03",
+    "minutes": 92
+   },
+   "model": {
+    "error": "off"
+   }
+  }
+ }
+}

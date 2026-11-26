@@ -25,20 +25,34 @@ function payLine(v, ex) {
   if ((p.attempts || []).length && v.status === 'Paid') t += `<div class="small">Paid on attempt ${p.attempts.length + 1}; the earlier one moved no money.</div>`;
   return `<div class="small">${t}</div>`;
 }
+// The agent's note check: what the carer wrote, and whether the agent paid or held it (and why).
+function reviewLine(v) {
+  const r = v.review, note = v.receipt?.note;
+  let t = note ? `<div class="small note">Carer's note: “${esc(note)}”</div>` : '';
+  if (!r) return t;
+  const src = r.source === 'model+rules' ? 'note read by your agent (model + rules)' : r.source === 'rules' ? 'note checked by your agent (rules; model unavailable)' : r.source === 'off' ? 'note check OFF (test)' : 'note check';
+  if (r.decision === 'pay') return t + `<div class="small">${esc(src)}: nothing unusual, paid without asking you.</div>`;
+  t += `<div class="small warn held"><b>Your agent held this payment</b> (${esc(src)}):<ul>${(r.reasons || []).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
+  t += r.released ? `You checked it and released the payment.</div>` : `Nothing has been paid. Mum said the visit happened.</div>`;
+  return t;
+}
+const heldByAgent = (v) => v.status === 'Confirmed' && v.review?.decision === 'hold' && !v.review.released && !v.payment;
 const LABEL = { Paid: 'paid', Rejected: 'did not happen', Held: 'waits for you', Posted: 'waiting for Mum', Confirmed: 'paying…' };
 async function load() {
   const [cfg, vs, ms] = await Promise.all(['/api/config', '/api/visits', '/api/messages'].map((u) => fetch(u).then((r) => r.json())));
   const fx = cfg.fx ? ` Paid in test USDC at ${Number(cfg.fx.krwPerUsd).toLocaleString('en-US')} won per dollar (${cfg.fx.source}, ${cfg.fx.date})${cfg.fx.scale > 1 ? `, testnet scale 1:${cfg.fx.scale}` : ''}: ${Number(cfg.perVisitCap).toLocaleString('en-US')} won = $${cfg.capUsd}.` : '';
   document.getElementById('rules').textContent = `Your rules: at most ${cfg.weeklyMax} visits a week, at most ${Number(cfg.perVisitCap).toLocaleString('en-US')} won a visit. Only visits Mum confirms are paid.${fx}`;
   document.getElementById('sPaid').textContent = vs.filter((v) => v.status === 'Paid').length;
+  document.getElementById('rules').textContent += cfg.carePlan ? ` Every visit: ${cfg.carePlan.tasks.join(', ')}, at least ${cfg.carePlan.minMinutes} minutes; your agent reads each note and holds anything odd for you.` : '';
   document.getElementById('sWait').textContent = vs.filter((v) => ['Posted', 'Held', 'Confirmed'].includes(v.status)).length;
   document.getElementById('sNo').textContent = vs.filter((v) => v.status === 'Rejected').length;
   document.getElementById('msgs').innerHTML = ms.length ? ms.slice(0, 6).map((m) => `<div class="msg"><time>${esc(new Date(m.at).toLocaleString('en-GB', { timeZone: 'Asia/Seoul' }))}</time>${esc(m.text)}</div>`).join('') : '<p class="small">Nothing yet.</p>';
   const ex = cfg.explorer;
   document.getElementById('visits').innerHTML = vs.slice().reverse().map((v) => `<div class="row"><div><b>${esc(day(v.visitTime))}</b> · ${esc(v.receipt?.carer || 'carer')} · ${Number(v.amount).toLocaleString('en-US')} won
-    ${v.price?.usd ? `<span class="small"> = $${esc(v.price.usd)}</span>` : ''}${payLine(v, ex)}</div>
-    <div>${v.status === 'Held' ? `<button class="approve" data-v="${v.id}">Approve</button>` : v.status === 'Confirmed' && v.payment?.status === 'failed' && v.payment?.retryable ? `<button class="retry" data-v="${v.id}">Try payment again</button>` : `<span class="pill ${esc(v.status)}">${esc(v.status === 'Confirmed' && ['failed', 'unsettled', 'retrying'].includes(v.payment?.status) ? 'confirmed, not paid yet' : (LABEL[v.status] || v.status))}</span>`}</div></div>`).join('') || '<p class="small">No visits yet.</p>';
+    ${v.price?.usd ? `<span class="small"> = $${esc(v.price.usd)}</span>` : ''}${reviewLine(v)}${payLine(v, ex)}</div>
+    <div>${heldByAgent(v) ? `<button class="release" data-v="${v.id}">Pay anyway</button>` : v.status === 'Held' ? `<button class="approve" data-v="${v.id}">Approve</button>` : v.status === 'Confirmed' && v.payment?.status === 'failed' && v.payment?.retryable ? `<button class="retry" data-v="${v.id}">Try payment again</button>` : `<span class="pill ${esc(v.status)}">${esc(v.status === 'Confirmed' && ['failed', 'unsettled', 'retrying'].includes(v.payment?.status) ? 'confirmed, not paid yet' : (LABEL[v.status] || v.status))}</span>`}</div></div>`).join('') || '<p class="small">No visits yet.</p>';
   document.querySelectorAll('.approve').forEach((b) => b.onclick = async () => { b.disabled = true; await fetch('/api/approve', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ visitId: +b.dataset.v }) }); load(); });
+  document.querySelectorAll('.release').forEach((b) => b.onclick = async () => { b.disabled = true; await fetch('/api/release', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ visitId: +b.dataset.v }) }); load(); });
   document.querySelectorAll('.retry').forEach((b) => b.onclick = async () => { b.disabled = true; await fetch('/api/retry', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ visitId: +b.dataset.v }) }); load(); });
   document.getElementById('chain').innerHTML = `Rules and every visit are on ${esc(cfg.network)}: contract ${ex ? `<a href="${esc(ex)}/address/${esc(cfg.contract)}" target="_blank" rel="noopener"><code>${esc(cfg.contract)}</code></a>` : `<code>${esc(cfg.contract)}</code>`}. Payments: HSP ${cfg.hspMode === 'mock' ? 'MOCK (test run, no money moves)' : 'QA, settling on ' + esc(cfg.hspNetwork)}.`;
 }

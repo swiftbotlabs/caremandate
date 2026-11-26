@@ -21,6 +21,7 @@ import { keccak256, toBytes } from 'viem';
 import { connect, send, visit, mandate, payment, ABI, ISSUE } from './lib/chain.mjs';
 import { payVisit, waitSettled, Refused } from './lib/hsp.mjs';
 import { usdFor, maxPayRaw, recordLimitRaw } from './lib/fx.mjs';
+import { reviewVisit, DEFAULT_PLAN } from './lib/review.mjs';
 
 const ROOT = path.dirname(new URL(import.meta.url).pathname);
 const log = (o) => console.log(JSON.stringify({ at: new Date().toISOString(), ...o }));
@@ -37,6 +38,13 @@ if (HSP_MODE === 'qa') {   // fail closed: a missing pay-to or payer key must st
   if (!ADDR.test(process.env.AGENCY_PAYTO || '')) refuseStart('HSP_MODE=qa needs AGENCY_PAYTO (the HSP merchant pay-to address, e.g. HSP_QA_ADDRESS from the merchant env)');
   if (!/^0x[0-9a-fA-F]{64}$/.test(process.env.HSP_PAYER_PK || '')) refuseStart('HSP_MODE=qa needs HSP_PAYER_PK (0x + 64 hex)');
 }
+// Mina's care plan: what every visit should include. Her agent reads each visit note against it before paying (lib/review.mjs).
+let PLAN = DEFAULT_PLAN;
+try { if (process.env.CM_CARE_PLAN) { const p = JSON.parse(process.env.CM_CARE_PLAN);
+  if (!Array.isArray(p.tasks) || !p.tasks.length || p.tasks.length > 10 || !p.tasks.every((t) => typeof t === 'string' && t.length <= 30)) throw new Error('tasks');
+  PLAN = { ...DEFAULT_PLAN, ...p, minMinutes: Number(p.minMinutes ?? DEFAULT_PLAN.minMinutes), startToleranceMin: Number(p.startToleranceMin ?? DEFAULT_PLAN.startToleranceMin) }; } }
+catch (e) { refuseStart('CM_CARE_PLAN is not a valid plan: ' + e.message); }
+if (process.env.REVIEW_OFF === '1' && (process.env.CM_NET || 'local') !== 'local') refuseStart('REVIEW_OFF is a local test switch only');
 const ctx = connect();
 const C = process.env.CM_CONTRACT, M = Number(process.env.CM_MANDATE || 1);
 const agent = ctx.wallet(process.env.FAMILY_AGENT_PK);
@@ -61,7 +69,7 @@ async function allVisits() {
     const v = await visit(ctx, C, i); if (v.mandateId !== M) continue;
     const oc = await payment(ctx, C, i);
     let usd = null; try { usd = usdFor(v.amount, m.rawPerMillionWon); } catch { usd = null; }
-    out.push({ ...v, amount: String(v.amount), receipt: s.receipts[v.receiptHash] || null, payment: s.payments[i] || null,
+    out.push({ ...v, amount: String(v.amount), receipt: s.receipts[v.receiptHash] || null, payment: s.payments[i] || null, review: (s.reviews || {})[i] || null,
       price: { usd, maxRaw: String(maxPayRaw(v.amount, m.rawPerMillionWon)), limitRaw: String(recordLimitRaw(v.amount, m.rawPerMillionWon)) },
       onchain: { paidRaw: String(oc.paidRaw), settlementTx: oc.settlementTx, issues: oc.issues, agencyAck: oc.agencyAck } });
   }
@@ -75,8 +83,39 @@ async function confirm({ visitId, happened, v, r, s: sig }) {
   const st = load();
   if (vi.status === 'Rejected') { say(st, `${when}'s visit: Mum says it did not happen. Nothing paid.`, 'warn'); save(st); return vi; }
   if (vi.status === 'Held') { say(st, `${when}'s visit is the 4th this week. It waits for you: approve it on your page if you want it paid.`, 'warn'); save(st); return vi; }
-  if (vi.status === 'Confirmed') return startPay(vi, when, 'confirmed by Mum');
+  if (vi.status === 'Confirmed') return reviewThenPay(vi, when, 'confirmed by Mum');
   throw new Error('unexpected status ' + vi.status);
+}
+
+// Mina's agent reads the carer's note before paying a confirmed visit. "pay" -> HSP payment; "hold" -> nothing is ordered or signed
+// until Mina presses "Pay anyway" (/api/release). The decision, its source (model+rules or rules) and the reasons go to state.json
+// (reviews) and server.log (event "review"), and both pages show them. A visit is reviewed once; a hold is never lifted by the agent.
+async function reviewThenPay(vi, when, why) {
+  let st = load(); st.reviews = st.reviews || {};
+  const prev = st.reviews[vi.id];
+  if (prev?.decision === 'hold' && !prev.released) return { ...vi, reviewHeld: true, review: prev };
+  if (!prev) {
+    let r;
+    try { r = await reviewVisit({ receipt: st.receipts[vi.receiptHash] || null, onchainHash: vi.receiptHash, visitTime: vi.visitTime, plan: PLAN }); }
+    catch (e) { r = { at: new Date().toISOString(), decision: 'hold', source: 'error', reasons: ['The note check failed, so the payment waits for you.'], rules: ['review_error'], model: { error: String(e.message).slice(0, 120) } }; }
+    st = load(); st.reviews = st.reviews || {}; st.reviews[vi.id] = r; save(st);
+    log({ event: 'review', visitId: vi.id, decision: r.decision, source: r.source, rules: r.rules, model: r.model?.name || null, modelDecision: r.model?.decision || null, modelError: r.model?.error || null, modelMs: r.model?.ms || null, reasons: r.reasons });
+    if (r.decision === 'hold') {
+      say(st, `${when}'s visit: Mum said it happened, but I am holding the payment until you look: ${r.reasons.slice(0, 3).join(' ')} Nothing has been paid. "Pay anyway" on your page pays it.`, 'warn'); save(st);
+      return { ...vi, reviewHeld: true, review: r };
+    }
+  }
+  return startPay(vi, when, why);
+}
+
+async function release({ visitId }) {
+  const st = load(); const r = (st.reviews || {})[visitId];
+  if (!r || r.decision !== 'hold' || r.released) throw new Error(`visit ${visitId}: no payment held by the note check`);
+  const vi = await visit(ctx, C, visitId);
+  if (vi.status !== 'Confirmed') throw new Error(`visit ${visitId} is ${vi.status} on chain, not Confirmed`);
+  r.released = { by: 'mina', at: new Date().toISOString() }; save(st);
+  log({ event: 'review_released', visitId, by: 'mina' });
+  return startPay(vi, day(vi.visitTime), 'confirmed by Mum; you checked the note');
 }
 
 // Payments: one at a time, in the background. The record is written BEFORE any HSP call and updated at each step, so a crash or a
@@ -203,7 +242,7 @@ async function approve({ visitId }) {
   const w = await sendLocked(family, C, 'approveExtra', [BigInt(visitId)]);
   const vi = await visit(ctx, C, visitId);
   log({ event: 'approved', visitId, status: vi.status, tx: w.hash });
-  return startPay(vi, day(vi.visitTime), 'approved by you');
+  return reviewThenPay(vi, day(vi.visitTime), 'approved by you');
 }
 
 const json = (res, code, o) => { res.writeHead(code, { 'content-type': 'application/json', 'cache-control': 'no-store' }); res.end(JSON.stringify(o, (k, v) => typeof v === 'bigint' ? v.toString() : v)); };
@@ -223,17 +262,17 @@ http.createServer(async (req, res) => {
     if (req.method === 'GET' && u.pathname === '/api/config') {
       const m = await mandate(ctx, C, M);
       return json(res, 200, { chainId: ctx.cfg.id, network: ctx.cfg.name, contract: C, mandateId: M, confirmer: m.confirmer, perVisitCap: String(m.perVisitCap), weeklyMax: m.weeklyMax, explorer: ctx.cfg.explorer, hspMode: HSP_MODE,
-        hspNetwork: HSP_NETWORK, rawPerMillionWon: String(m.rawPerMillionWon), capUsd: (() => { try { return usdFor(m.perVisitCap, m.rawPerMillionWon); } catch { return null; } })(), fx: FX });
+        hspNetwork: HSP_NETWORK, carePlan: PLAN, rawPerMillionWon: String(m.rawPerMillionWon), capUsd: (() => { try { return usdFor(m.perVisitCap, m.rawPerMillionWon); } catch { return null; } })(), fx: FX });
     }
     if (req.method === 'GET' && u.pathname === '/api/visits') return json(res, 200, await allVisits());
     if (req.method === 'GET' && u.pathname === '/api/messages') return json(res, 200, load().messages);
-    if (req.method === 'POST' && (u.pathname === '/api/confirm' || u.pathname === '/api/approve' || u.pathname === '/api/retry')) {
+    if (req.method === 'POST' && ['/api/confirm', '/api/approve', '/api/retry', '/api/release'].includes(u.pathname)) {
       let body = ''; for await (const c of req) { body += c; if (body.length > 4096) return json(res, 413, { error: 'body too large' }); }
       let b; try { b = JSON.parse(body || '{}'); } catch { return json(res, 400, { error: 'bad json' }); }
       if (!b || !Number.isInteger(b.visitId) || b.visitId < 1) return json(res, 400, { error: 'visitId' });
       if (u.pathname === '/api/confirm' && !(Number.isInteger(Number(b.v)) && /^0x[0-9a-fA-F]{64}$/.test(String(b.r)) && /^0x[0-9a-fA-F]{64}$/.test(String(b.s)))) return json(res, 400, { error: 'signature' });
       log({ event: 'request', path: u.pathname, visitId: b.visitId, happened: u.pathname === '/api/confirm' ? !!b.happened : undefined });
-      return json(res, 200, u.pathname === '/api/confirm' ? await confirm(b) : u.pathname === '/api/retry' ? await retryPay(b.visitId, 'mina') : await approve(b));
+      return json(res, 200, u.pathname === '/api/confirm' ? await confirm(b) : u.pathname === '/api/retry' ? await retryPay(b.visitId, 'mina') : u.pathname === '/api/release' ? await release(b) : await approve(b));
     }
     const f = STATIC[u.pathname] ? path.join(ROOT, STATIC[u.pathname]) : vendor(u.pathname);
     if (req.method === 'GET' && f && fs.existsSync(f)) { res.writeHead(200, { 'content-type': TYPES[path.extname(f)] || 'text/plain' }); return res.end(fs.readFileSync(f)); }
@@ -245,7 +284,7 @@ http.createServer(async (req, res) => {
     json(res, 500, { error: msg });
   }
 }).listen(Number(process.env.PORT || 8790), () => {
-  log({ event: 'start', port: Number(process.env.PORT || 8790), net: ctx.net, contract: C, hspMode: HSP_MODE, hspNetwork: HSP_NETWORK, payTo: process.env.AGENCY_PAYTO || '(mandate agency)', payer: hspPayer.account.address });
+  log({ event: 'start', port: Number(process.env.PORT || 8790), net: ctx.net, contract: C, hspMode: HSP_MODE, hspNetwork: HSP_NETWORK, payTo: process.env.AGENCY_PAYTO || '(mandate agency)', payer: hspPayer.account.address, review: process.env.REVIEW_OFF === '1' ? 'OFF (test)' : process.env.REVIEW_LLM_KEY ? 'model+rules ' + (process.env.REVIEW_LLM_MODEL || 'openai/gpt-oss-20b') : 'rules only', plan: PLAN });
   console.log('caremandate on :' + (process.env.PORT || 8790), ctx.net, C);
   // payments left mid-way by an earlier run: resume the submitted ones (query only); flag the rest, never re-sign them
   const st = load(); let n = 0;

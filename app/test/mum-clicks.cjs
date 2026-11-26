@@ -26,6 +26,14 @@ const SHOTS = process.env.CM_SHOTS || require('path').join(__dirname, '..', '..'
     vs = await (await fetch('' + BASE + '/api/visits')).json();
     const now = JSON.stringify(vs.map((v) => [v.status, v.payment && (v.payment.hspStatus || v.payment.status)]));
     if (now !== last) { console.log(new Date().toISOString(), now); last = now; }
+    // the agent held a visit after reading its note: Mina reads why, then presses "Pay anyway" (CM_NO_RELEASE=1 leaves it held)
+    const held = vs.find((v) => v.status === 'Confirmed' && v.review?.decision === 'hold' && !v.review.released && !v.payment);
+    if (held && !process.env.CM_NO_RELEASE) {
+      await m.reload(); await m.waitForSelector('.release', { timeout: 20000 });
+      await m.screenshot({ path: SHOTS + '/mina-review-held.png', fullPage: true });
+      await m.click('.release'); console.log(new Date().toISOString(), 'mina released visit', held.id, 'after reading:', JSON.stringify(held.review.reasons));
+      await new Promise((r) => setTimeout(r, 1500)); continue;
+    }
     if (vs.every((v) => v.status !== 'Confirmed' && v.status !== 'Held' && (v.status !== 'Paid' || v.payment?.markPaidTx)) || vs.some((v) => ['failed', 'unsettled'].includes(v.payment?.status))) break;
     await new Promise((r) => setTimeout(r, 3000));
   }

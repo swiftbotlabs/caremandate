@@ -7,6 +7,8 @@
 #   + the agency posts 5 visits and one over the cap (refused on chain) + Mum answers in the real page + Mina approves the held one.
 #   bash test/e2e-offline-qa.sh                          expect: offline qa e2e PASS (scenario ok)
 #   CM_SCENARIO=failed-once|timeout|overcharge bash ...  failure modes (gate: test/e2e-gate.mjs); each must PASS its own gate
+#   CM_SCENARIO=review bash ...                          visit 4 has an odd note: Mina's agent holds it (no HSP order) until Mina
+#                                                        presses "Pay anyway"; control: + REVIEW_OFF=1 -> paid unread, gate FAILS
 #   CM_DROP_PAYTO=1 bash ...                             control: no AGENCY_PAYTO -> the server refuses to start, script fails
 # No network. Output: $CM_RUNS/offline-<scenario>-<time>/
 set -euo pipefail
@@ -14,7 +16,7 @@ cd "$(dirname "$0")/.."
 export TMPDIR=${TMPDIR:-/tmp}
 [ -d /data/motion/node_modules/playwright ] && export NODE_PATH=${NODE_PATH:-/data/motion/node_modules} PLAYWRIGHT_BROWSERS_PATH=${PLAYWRIGHT_BROWSERS_PATH:-/data/motion/pw-browsers}
 SCEN=${CM_SCENARIO:-ok}
-case $SCEN in ok|failed-once) MF=$SCEN;; timeout|overcharge) MF=$SCEN;; *) echo "unknown CM_SCENARIO $SCEN"; exit 2;; esac
+case $SCEN in ok|failed-once) MF=$SCEN;; timeout|overcharge) MF=$SCEN;; review) MF=ok; export CM_ODD_VISIT=${CM_ODD_VISIT:-4};; *) echo "unknown CM_SCENARIO $SCEN"; exit 2;; esac
 [ "$MF" = ok ] && MF=''
 OUTD=${CM_RUNS:-$PWD/../runs}/offline-$SCEN-$(date -u +%Y%m%dT%H%M%SZ); mkdir -p "$OUTD"
 PIDS=(); trap 'kill ${PIDS[@]} 2>/dev/null || true' EXIT
@@ -47,7 +49,8 @@ curl -sf -o /dev/null http://127.0.0.1:8791/api/config || { echo "SERVER DID NOT
 # the agency's own agent: watches PaymentSettled on chain, checks the transfer itself, acknowledges
 SETTLE_RPC=$RPC SETTLE_TOKEN=$USDC SETTLE_CHAIN_ID=133 AGENCY_FROM_BLOCK=0 AGENCY_WATCH_MS=2000 node agency-watch.mjs > "$OUTD/agency-watch.log" 2>&1 & AW=$!; PIDS+=($AW)
 NOW=$(cast block latest -f timestamp --rpc-url $RPC)
-i=0; for c in "Tue visit" "Thu visit" "Fri visit" "Sat visit" "Sun visit"; do i=$((i+1)); node agency.mjs 1 $((NOW-7200+i*60)) 45000 "Ji-woo" "$c: lunch, medicines, a short walk" >> "$OUTD/agency.log"; done
+# each visit carries the carer's note (test/review-fixtures.mjs, re-timed to the visit); CM_ODD_VISIT=<n> gives visit n an odd note
+i=0; for c in "Tue visit" "Thu visit" "Fri visit" "Sat visit" "Sun visit"; do i=$((i+1)); T=$((NOW-7200+i*60)); K=$(node test/note.mjs key $i "${CM_ODD_VISIT:-0}"); node agency.mjs 1 $T 45000 "Ji-woo" "$c: lunch, medicines, a short walk" "$(node test/note.mjs $K $T)" >> "$OUTD/agency.log"; done
 # cap trip: a visit priced over Mina's 45,000-won cap must be refused by the contract (exit 4)
 set +e; node agency.mjs 1 $((NOW-600)) 46000 "Ji-woo" "Mon visit, priced 46,000 won" > "$OUTD/captrip.json"; RC=$?; set -e
 [ $RC = 4 ] || { echo "cap trip: expected refusal rc 4, got $RC"; cat "$OUTD/captrip.json"; exit 1; }
@@ -62,7 +65,7 @@ for k,p in sorted(s['payments'].items()): print('visit',k,p.get('mode'),p.get('s
 echo "mock: $(cat "$OUTD/mock-stats.json")"
 kill -0 $AW 2>/dev/null || { echo "agency-watch exited early"; tail -3 "$OUTD/agency-watch.log"; exit 1; }
 echo "run dir: $OUTD"
-if [ "$SCEN" = ok ] || [ "$SCEN" = failed-once ]; then grep -q "E2E PASS" "$OUTD/result.log" || { echo "offline qa e2e FAILED (pages; $OUTD)"; exit 1; }; fi
+if [ "$SCEN" = ok ] || [ "$SCEN" = failed-once ] || [ "$SCEN" = review ]; then grep -q "E2E PASS" "$OUTD/result.log" || { echo "offline qa e2e FAILED (pages; $OUTD)"; exit 1; }; fi
 # optional: build the record page from this offline run while the local chain is still up (tests app/demo-page.mjs + its tamper control)
 if [ -n "${CM_DEMO_OUT:-}" ]; then
   DEMO_NET=local DEMO_SETTLE_RPC=$RPC DEMO_OFFLINE_GATES=${CM_DEMO_GATES:-} node demo-page.mjs "$OUTD" "$CM_DEMO_OUT" | tee "$OUTD/demo-page.log"
