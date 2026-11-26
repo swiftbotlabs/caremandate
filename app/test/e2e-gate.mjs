@@ -1,11 +1,13 @@
 // The gate of the end-to-end runs: decides PASS/FAIL from the run's records AND the chain (never from printed text).
-//   node test/e2e-gate.mjs <runDir> <scenario>     scenario: ok | failed-once | review | timeout | overcharge | testnet | testnet-review
+//   node test/e2e-gate.mjs <runDir> <scenario>     scenario: ok | failed-once | review | timeout | overcharge | testnet | testnet-review | a2a
+//   GATE_A2A=1 (or scenario a2a): also gate the agent-to-agent make-up exchange (a2a-agency.jsonl, the anchors on chain, state.json)
 // Reads <runDir>/state.json, setup.json, agency.log, captrip.json, [mock-stats.json], [agency-watch.log]; re-reads every paid visit on
 // chain (CM_NET), and, when SETTLE_RPC + SETTLE_TOKEN are set, the settlement transfer on HSP's network. Exit 0 = PASS.
 import fs from 'node:fs';
 import path from 'node:path';
 import { createPublicClient, http, parseAbiItem, decodeEventLog, keccak256, toBytes } from 'viem';
-import { connect, visit, payment, mandate } from '../lib/chain.mjs';
+import { connect, visit, payment, mandate, receiptHash } from '../lib/chain.mjs';
+import { domain as a2aDomain, parseProposal, parseDecision, proposalDigest, decisionDigest, proposalSigner, decisionSigner, anchorData } from '../lib/a2a.mjs';
 import { recordLimitRaw, usdFor } from '../lib/fx.mjs';
 
 const [dir, scen = 'ok'] = process.argv.slice(2);
@@ -30,7 +32,8 @@ must(usdFor(m.perVisitCap, m.rawPerMillionWon) === setup.fx.capUsd, 'cap in USD 
 const trip = has('captrip.json') ? J('captrip.json') : null;
 must(trip && trip.refused === true && trip.reason === 'BadInput' && trip.amountWon > Number(m.perVisitCap), 'cap-trip visit refused on chain (BadInput)');
 const vc = Number(await ctx.pub.readContract({ address: C, abi: (await import('../lib/chain.mjs')).ABI, functionName: 'visitCount' }));
-must(vc === posts.length && posts.length === 5, `visitCount ${vc} = 5 posted visits (the over-cap one is not a visit)`);
+const mkPosts = jl('agency-makeup.log').filter((x) => x.visitId);
+must(vc === posts.length + mkPosts.length && posts.length === 5, `visitCount ${vc} = 5 posted visits + ${mkPosts.length} make-ups (the over-cap one is not a visit)`);
 
 // 3. per visit
 const flowsSigned = new Set(); let paid = 0, acked = 0, issues = 0, sumRaw = 0n;
@@ -54,11 +57,11 @@ for (const p of posts) {
   }
   if (rec) for (const a of rec.attempts || []) if (a.flowId) flowsSigned.add(a.flowId);
 }
-const want = { ok: [4, 0], 'failed-once': [4, 1], review: [4, 0], testnet: [4, null], 'testnet-review': [4, null], timeout: [0, null], overcharge: [0, null] }[scen];
+const want = { a2a: [4, 0], ok: [4, 0], 'failed-once': [4, 1], review: [4, 0], testnet: [4, null], 'testnet-review': [4, null], timeout: [0, null], overcharge: [0, null] }[scen];
 must(want, 'known scenario');
 must(paid === want[0], `${paid} visits Paid on chain (want ${want[0]})`);
 if (want[0]) must(acked === paid, `agency acknowledged ${acked}/${paid} on chain by itself`);
-if (want[0]) must(watch.filter((x) => x.event === 'ack').length === paid, 'agency-watch.log: one ack line per paid visit');
+if (want[0]) must(watch.filter((x) => x.event === 'ack').length === paid + (scen === 'a2a' ? 1 : 0), 'agency-watch.log: one ack line per paid visit');
 if (want[1] !== null) must(issues === want[1], `on-chain PaymentIssue count ${issues} (want ${want[1]})`);
 if (scen === 'failed-once') {
   const r = Object.values(st.payments).find((x) => (x.attempts || []).length);
@@ -104,6 +107,39 @@ if (scen === 'overcharge') {
   must((await payment(ctx, C, 1)).issues >= 1 && (await visit(ctx, C, 1)).status === 'Confirmed', 'visit 1: Confirmed + PaymentIssue on chain');
   must(stats && stats.signaturesOk === 0 && stats.submits === 0 && stats.transfers === 0, `mock: nothing signed or submitted (got ${JSON.stringify(stats)})`);
 }
-console.log(JSON.stringify({ scenario: scen, checks, failed: fails.length, paid, acked, issues, sumRaw: String(sumRaw), fails }));
+// 5. agent to agent: the make-up exchange after Mum's No
+let a2a = null;
+if (scen === 'a2a' || process.env.GATE_A2A === '1') {
+  const dom = a2aDomain(ctx.cfg.id, C), lines = jl('a2a-agency.jsonl'), sdec = st.a2a?.decisions || [];
+  must(lines.length >= 2 && lines.length <= 3, `a2a: 2-3 proposals exchanged (got ${lines.length})`);
+  must(lines.filter((x) => x.accept).length === 1 && lines[lines.length - 1].accept === true, 'a2a: exactly one accepted, the last');
+  // planted control in the run: the agency's first offer is the carer's evening; Mina's hours must refuse it
+  must(lines[0] && lines[0].accept === false && (lines[0].reasons || []).some((r) => r.code === 'outside_hours'), `a2a: the evening offer was declined for Mina's hours (got ${lines[0] ? JSON.stringify(lines[0].reasons) : 'none'})`);
+  for (const x of lines) {
+    const p = parseProposal(x.proposal), d = parseDecision(x.decision), ph = proposalDigest(dom, p), dh = decisionDigest(dom, d);
+    must(ph === x.proposalHash && dh === x.decisionHash && d.proposal === ph && d.accept === x.accept, `a2a ${x.n}: digests recomputed`);
+    must((await proposalSigner(dom, p, x.proposalSig)).toLowerCase() === m.agency.toLowerCase(), `a2a ${x.n}: proposal signed by the mandate's agency`);
+    must((await decisionSigner(dom, d, x.decisionSig)).toLowerCase() === m.familyAgent.toLowerCase(), `a2a ${x.n}: decision signed by the mandate's familyAgent`);
+    const tx = await ctx.pub.getTransaction({ hash: x.anchorTx }), rc = await ctx.pub.getTransactionReceipt({ hash: x.anchorTx });
+    must(rc.status === 'success' && tx.from.toLowerCase() === m.familyAgent.toLowerCase() && tx.to.toLowerCase() === m.familyAgent.toLowerCase() && tx.input.toLowerCase() === anchorData(dh, ph).toLowerCase(), `a2a ${x.n}: decision anchored on chain by Mina's agent`);
+    must(sdec.some((y) => y.decisionHash === dh && y.anchorTx === x.anchorTx && !y.rulesOff), `a2a ${x.n}: Mina's agent's own record matches, rules on`);
+  }
+  const agreed = lines.find((x) => x.accept);
+  a2a = { proposals: lines.length, agreed: agreed?.decisionHash || null, anchors: lines.map((x) => x.anchorTx) };
+  if (scen === 'a2a') {
+    must((lines[0]?.reasons || []).some((r) => r.code === 'week_full'), `a2a: the first offer was also declined for Mina's weekly limit (got ${JSON.stringify(lines[0]?.reasons)})`);
+    must(mkPosts.length === 2, `a2a: 2 make-up claims posted (got ${mkPosts.length})`);
+    const [g, bad] = mkPosts, vg = await visit(ctx, C, g.visitId), vb = await visit(ctx, C, bad.visitId), rg = reviews[String(g.visitId)], rb = reviews[String(bad.visitId)];
+    const rcg = st.receipts[g.receiptHash];
+    must(rcg && receiptHash(rcg).toLowerCase() === vg.receiptHash.toLowerCase() && decisionDigest(dom, parseDecision(rcg.makeup.decision)) === agreed?.decisionHash, 'a2a: the make-up receipt on chain carries the signed agreement');
+    must(vg.visitTime >= Number(agreed.proposal.slotStart) && vg.visitTime <= Number(agreed.proposal.slotEnd), 'a2a: the make-up visit is inside the agreed slot');
+    const og = await payment(ctx, C, g.visitId);
+    must(vg.status === 'Paid' && og.agencyAck && rg?.decision === 'pay' && rg.makeup?.matched === true && st.a2a?.used?.[agreed.decisionHash] === g.visitId, `a2a: the agreed make-up was paid and acknowledged (got ${vg.status}, ${rg?.decision})`);
+    must(vb.status === 'Confirmed' && rb?.decision === 'hold' && rb.source === 'a2a' && (rb.rules || []).includes('makeup_reused') && (rb.rules || []).includes('makeup_outside_slot') && !st.payments[String(bad.visitId)] && /^0x0{64}$/.test(vb.paymentRef),
+      `a2a: the second claim on the same agreement was held, nothing ordered (got ${vb.status}, ${rb?.decision}, ${(rb?.rules || []).join(',')})`);
+    must(stats && stats.signaturesOk === 5 && stats.transfers === 5, `mock: 5 signatures, 5 transfers (got ${JSON.stringify(stats)})`);
+  }
+}
+console.log(JSON.stringify({ scenario: scen, a2a, checks, failed: fails.length, paid, acked, issues, sumRaw: String(sumRaw), fails }));
 if (checks < 8) { console.error('GATE FAIL: too few checks'); process.exit(1); }
 process.exit(fails.length ? 1 : 0);

@@ -9,6 +9,14 @@
 #   CM_SCENARIO=failed-once|timeout|overcharge bash ...  failure modes (gate: test/e2e-gate.mjs); each must PASS its own gate
 #   CM_SCENARIO=review bash ...                          visit 4 has an odd note: Mina's agent holds it (no HSP order) until Mina
 #                                                        presses "Pay anyway"; control: + REVIEW_OFF=1 -> paid unread, gate FAILS
+#   CM_SCENARIO=a2a bash ...                             agent to agent: after Mum says No to visit 2, the agency's agent proposes
+#                                                        make-up slots to Mina's agent (EIP-712, both keys from the mandate); the
+#                                                        evening offer is declined (Mina's hours), a later one accepted; every decision
+#                                                        anchored on chain. The chain is then moved to the agreed slot: the make-up
+#                                                        visit is paid, a second visit claiming the same agreement outside its slot
+#                                                        is held. Control: + A2A_RULES_OFF=1 -> the evening offer is accepted, gate FAILS.
+#                                                        (anvil starts 8 days in the past, so the slot is never ahead of the wall clock
+#                                                        that EIP-3009 validity uses)
 #   CM_FORK_HSKTESTNET=1 bash ...                       the same on a local fork of HSK testnet, settling through the REAL HSK-testnet
 #                                                        USDC contract (FiatToken) instead of the test token
 #   CM_DROP_PAYTO=1 bash ...                             control: no AGENCY_PAYTO -> the server refuses to start, script fails
@@ -18,7 +26,7 @@ cd "$(dirname "$0")/.."
 export TMPDIR=${TMPDIR:-/tmp}
 [ -d /data/motion/node_modules/playwright ] && export NODE_PATH=${NODE_PATH:-/data/motion/node_modules} PLAYWRIGHT_BROWSERS_PATH=${PLAYWRIGHT_BROWSERS_PATH:-/data/motion/pw-browsers}
 SCEN=${CM_SCENARIO:-ok}
-case $SCEN in ok|failed-once) MF=$SCEN;; timeout|overcharge) MF=$SCEN;; review) MF=ok; export CM_ODD_VISIT=${CM_ODD_VISIT:-4};; *) echo "unknown CM_SCENARIO $SCEN"; exit 2;; esac
+case $SCEN in ok|failed-once) MF=$SCEN;; timeout|overcharge) MF=$SCEN;; review) MF=ok; export CM_ODD_VISIT=${CM_ODD_VISIT:-4};; a2a) MF=ok;; *) echo "unknown CM_SCENARIO $SCEN"; exit 2;; esac
 [ "$MF" = ok ] && MF=''
 OUTD=${CM_RUNS:-$PWD/../runs}/offline-$SCEN${CM_FORK_HSKTESTNET:+-hskfork}-$(date -u +%Y%m%dT%H%M%SZ); mkdir -p "$OUTD"
 PIDS=(); trap 'kill ${PIDS[@]} 2>/dev/null || true' EXIT
@@ -30,7 +38,10 @@ if [ -n "${CM_FORK_HSKTESTNET:-}" ]; then
   for i in $(seq 1 60); do cast chain-id --rpc-url $RPC >/dev/null 2>&1 && break; sleep 1; done
   cast rpc anvil_nodeInfo --rpc-url $RPC >/dev/null 2>&1 && [ "$(cast chain-id --rpc-url $RPC)" = 133 ] || { echo "not a local fork of chain 133: stop"; exit 3; }
 else
-  anvil --port 8545 --chain-id 133 --silent & PIDS+=($!); sleep 2
+  # a2a: the chain starts on a Friday 02:00 UTC 9-16 days ago (contract weeks start Thursday 00:00 UTC), so the agency's first offer
+  # (the next evening) falls in the same, already full week: Mina's agent must decline it for her hours AND her weekly limit
+  ANVIL_TS=(); [ "$SCEN" = a2a ] && ANVIL_TS=(--timestamp $(( ($(date +%s) - 9*86400) / 604800 * 604800 + 86400 + 7200 )))
+  anvil --port 8545 --chain-id 133 --silent "${ANVIL_TS[@]}" & PIDS+=($!); sleep 2
 fi
 export CM_LOCAL_CHAIN_ID=133 HSP_NETWORK=hashkey-testnet
 # anvil's well-known public default test keys, used on the local anvil chain only
@@ -64,7 +75,7 @@ for i in $(seq 1 40); do curl -sf -o /dev/null http://127.0.0.1:8791/api/config 
 curl -sf -o /dev/null http://127.0.0.1:8791/api/config || { echo "SERVER DID NOT START ($OUTD/server.log):"; cat "$OUTD/server.log"; exit 3; }
 # the agency's own agent: watches PaymentSettled on chain, checks the transfer itself, acknowledges
 FROMB=0; [ -n "${CM_FORK_HSKTESTNET:-}" ] && FROMB=$(cast block-number --rpc-url $RPC)   # a fork: scan from its head, not from genesis
-SETTLE_RPC=$RPC SETTLE_TOKEN=$USDC SETTLE_CHAIN_ID=133 AGENCY_FROM_BLOCK=$FROMB AGENCY_WATCH_MS=2000 node agency-watch.mjs > "$OUTD/agency-watch.log" 2>&1 & AW=$!; PIDS+=($AW)
+SETTLE_RPC=$RPC SETTLE_TOKEN=$USDC SETTLE_CHAIN_ID=133 AGENCY_FROM_BLOCK=$FROMB AGENCY_WATCH_MS=2000 FAMILY_AGENT_URL=$([ "$SCEN" = a2a ] && echo http://127.0.0.1:8791) AGENCY_A2A_OUT=$OUTD/a2a-agency.jsonl node agency-watch.mjs > "$OUTD/agency-watch.log" 2>&1 & AW=$!; PIDS+=($AW)
 NOW=$(cast block latest -f timestamp --rpc-url $RPC)
 # each visit carries the carer's note (test/review-fixtures.mjs, re-timed to the visit); CM_ODD_VISIT=<n> gives visit n an odd note
 i=0; for c in "Tue visit" "Thu visit" "Fri visit" "Sat visit" "Sun visit"; do i=$((i+1)); T=$((NOW-7200+i*60)); K=$(node test/note.mjs key $i "${CM_ODD_VISIT:-0}"); node agency.mjs 1 $T 45000 "Ji-woo" "$c: lunch, medicines, a short walk" "$(node test/note.mjs $K $T)" >> "$OUTD/agency.log"; done
@@ -72,6 +83,20 @@ i=0; for c in "Tue visit" "Thu visit" "Fri visit" "Sat visit" "Sun visit"; do i=
 set +e; node agency.mjs 1 $((NOW-600)) 46000 "Ji-woo" "Mon visit, priced 46,000 won" > "$OUTD/captrip.json"; RC=$?; set -e
 [ $RC = 4 ] || { echo "cap trip: expected refusal rc 4, got $RC"; cat "$OUTD/captrip.json"; exit 1; }
 MUMPK=$MUMPK node test/mum-clicks.cjs 2>&1 | tee "$OUTD/result.log" || true   # the gate below decides
+if [ "$SCEN" = a2a ]; then
+  # the agencies' agents negotiate on their own after Mum's No (agency-watch.mjs <-> server.mjs /api/a2a/makeup): wait for an agreement
+  for i in $(seq 1 60); do grep -q '"accept":true' "$OUTD/a2a-agency.jsonl" 2>/dev/null && break; sleep 1; done
+  grep '"accept":true' "$OUTD/a2a-agency.jsonl" | head -1 > "$OUTD/a2a-agreement.json" || { echo "a2a: no agreement"; tail -5 "$OUTD/agency-watch.log"; exit 1; }
+  SLOT=$(jq -r .proposal.slotStart "$OUTD/a2a-agreement.json"); SLOTEND=$(jq -r .proposal.slotEnd "$OUTD/a2a-agreement.json")
+  # time passes on the local chain until the agreed slot is over (never past the wall clock)
+  WARP=$((SLOTEND + 300)); [ $WARP -lt $(date +%s) ] || { echo "a2a: slot ahead of the wall clock"; exit 1; }
+  cast rpc evm_setNextBlockTimestamp $WARP --rpc-url $RPC > /dev/null && cast rpc evm_mine --rpc-url $RPC > /dev/null
+  # the agreed make-up visit, at the agreed time and price, carrying the signed agreement in its receipt
+  AGENCY_MAKEUP_FILE=$OUTD/a2a-agreement.json node agency.mjs 1 $SLOT 45000 "Ji-woo" "Make-up for the missed visit: lunch, medicines, a short walk" "$(node test/note.mjs normal $SLOT)" >> "$OUTD/agency-makeup.log"
+  # planted control: a second visit claiming the SAME agreement, after its slot: Mina's agent must hold it (Mum still says yes)
+  T2=$((SLOTEND + 120)); AGENCY_MAKEUP_FILE=$OUTD/a2a-agreement.json node agency.mjs 1 $T2 45000 "Ji-woo" "Make-up for the missed visit (again)" "$(node test/note.mjs normal2 $T2)" >> "$OUTD/agency-makeup.log"
+  MUMPK=$MUMPK CM_MAKEUP_N=2 node test/mum-makeup.cjs 2>&1 | tee "$OUTD/makeup.log" || true
+fi
 # give the agency's agent time to see the last settlement and acknowledge it (it polls every 2 s)
 for i in $(seq 1 20); do [ "$(grep -c '"event":"ack"' "$OUTD/agency-watch.log" || true)" -ge "$(python3 -c "import json;print(sum(1 for p in json.load(open('$OUTD/state.json'))['payments'].values() if p.get('markPaidTx')))")" ] && break; sleep 1; done
 curl -s http://127.0.0.1:8795/stats > "$OUTD/mock-stats.json"
@@ -82,7 +107,7 @@ for k,p in sorted(s['payments'].items()): print('visit',k,p.get('mode'),p.get('s
 echo "mock: $(cat "$OUTD/mock-stats.json")"
 kill -0 $AW 2>/dev/null || { echo "agency-watch exited early"; tail -3 "$OUTD/agency-watch.log"; exit 1; }
 echo "run dir: $OUTD"
-if [ "$SCEN" = ok ] || [ "$SCEN" = failed-once ] || [ "$SCEN" = review ]; then grep -q "E2E PASS" "$OUTD/result.log" || { echo "offline qa e2e FAILED (pages; $OUTD)"; exit 1; }; fi
+if [ "$SCEN" = ok ] || [ "$SCEN" = failed-once ] || [ "$SCEN" = review ] || [ "$SCEN" = a2a ]; then grep -q "E2E PASS" "$OUTD/result.log" || { echo "offline qa e2e FAILED (pages; $OUTD)"; exit 1; }; fi
 # optional: build the record page from this offline run while the local chain is still up (tests app/demo-page.mjs + its tamper control)
 if [ -n "${CM_DEMO_OUT:-}" ]; then
   DEMO_NET=local DEMO_SETTLE_RPC=$RPC DEMO_OFFLINE_GATES=${CM_DEMO_GATES:-} node demo-page.mjs "$OUTD" "$CM_DEMO_OUT" | tee "$OUTD/demo-page.log"

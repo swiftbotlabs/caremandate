@@ -15,6 +15,7 @@ import { createPublicClient, http, keccak256, toBytes, toFunctionSelector, parse
 import { connect, visit, mandate, payment, CHAINS, ABI } from './lib/chain.mjs';
 import { maxPayRaw, recordLimitRaw, usdFor } from './lib/fx.mjs';
 import { NOTES } from './test/review-fixtures.mjs';
+import { domain as a2aDomain, parseProposal, parseDecision, proposalDigest, decisionDigest, proposalSigner, decisionSigner, anchorData, DEFAULT_MAKEUP_RULES } from './lib/a2a.mjs';
 
 const [runDir, outDir] = process.argv.slice(2);
 if (!runDir || !outDir) { console.error('usage: node demo-page.mjs <runDir> <outDir>'); process.exit(2); }
@@ -23,7 +24,7 @@ const MAX = 2_000_000;
 for (const f of ['payments.txt', 'server.log', 'agency.log', 'setup.json', 'state.json']) {
   if (fs.statSync(path.join(runDir, f)).size > MAX) throw new Error(`${f} too large`);
 }
-for (const f of ['agency-watch.log', 'captrip.json']) if (fs.existsSync(path.join(runDir, f)) && fs.statSync(path.join(runDir, f)).size > MAX) throw new Error(`${f} too large`);
+for (const f of ['agency-watch.log', 'captrip.json', 'a2a-agency.jsonl', 'agency-makeup.log']) if (fs.existsSync(path.join(runDir, f)) && fs.statSync(path.join(runDir, f)).size > MAX) throw new Error(`${f} too large`);
 const HEX32 = /^0x[0-9a-f]{64}$/i, ADDR = /^0x[0-9a-f]{40}$/i;
 // real HSP flow ids are UUIDs; the offline stand-in's MOCKHSP-<uuid> is accepted only when building from a local (offline) run
 const UUID = process.env.DEMO_NET === 'local' ? /^(MOCKHSP-)?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i : /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -144,6 +145,36 @@ for (const v of visits) {
     checks++;
   }
 }
+// ---- agent to agent (v4 runs): the make-up exchange after Mum's No, re-checked: both signatures against the mandate's keys on chain,
+// every decision's anchor tx on chain, and (offline a2a runs) the make-up visits that claimed the agreement
+let A2A = null;
+if (fs.existsSync(path.join(runDir, 'a2a-agency.jsonl'))) {
+  const dom = a2aDomain(hsk.cfg.id, CONTRACT), sdec = state.a2a?.decisions || [];
+  const lines = jl(R('a2a-agency.jsonl'));
+  must(lines.length >= 1 && lines.length <= 3, 'a2a: 1-3 proposals');
+  for (const x of lines) {
+    const p = parseProposal(x.proposal), d = parseDecision(x.decision), ph = proposalDigest(dom, p), dh = decisionDigest(dom, d);
+    must(ph === x.proposalHash && dh === x.decisionHash && d.proposal === ph && d.accept === x.accept, `a2a ${x.n}: digests`);
+    must((await proposalSigner(dom, p, x.proposalSig)).toLowerCase() === m.agency.toLowerCase(), `a2a ${x.n}: proposal signed by the mandate's agency`);
+    must((await decisionSigner(dom, d, x.decisionSig)).toLowerCase() === m.familyAgent.toLowerCase(), `a2a ${x.n}: decision signed by the mandate's familyAgent`);
+    const tx = await hsk.pub.getTransaction({ hash: x.anchorTx }); await okTx(hsk.pub, x.anchorTx, `a2a ${x.n} anchor`);
+    must(tx.from.toLowerCase() === m.familyAgent.toLowerCase() && tx.to.toLowerCase() === m.familyAgent.toLowerCase() && tx.input.toLowerCase() === anchorData(dh, ph).toLowerCase(), `a2a ${x.n}: anchor input = decision + proposal digests`);
+    const own = sdec.find((y) => y.decisionHash === dh); must(own && !own.rulesOff, `a2a ${x.n}: in Mina's agent's records, rules on`);
+    x.text = own.reasons; checks += 3;
+  }
+  const ag = lines.find((x) => x.accept);
+  const mks = fs.existsSync(path.join(runDir, 'agency-makeup.log')) ? jl(R('agency-makeup.log')).filter((x) => x.visitId) : [];
+  for (const k of mks) {
+    k.on = await visit(hsk, CONTRACT, k.visitId); k.rv = (state.reviews || {})[String(k.visitId)] || null; k.rc = state.receipts[k.receiptHash]; k.p = state.payments[String(k.visitId)] || null;
+    must(k.rc && k.on.receiptHash.toLowerCase() === k.receiptHash.toLowerCase(), `make-up visit ${k.visitId}: receipt on chain`);
+    await okTx(hsk.pub, k.tx, `make-up visit ${k.visitId} post`);
+    if (k.on.status === 'Paid') { must(k.rv?.makeup?.matched && k.rv.makeup.decisionHash === ag?.decisionHash, `make-up visit ${k.visitId}: paid only as the agreed make-up`);
+      k.oc = await payment(hsk, CONTRACT, k.visitId); must(k.oc.agencyAck && k.p?.txHash, `make-up visit ${k.visitId}: acknowledged`); k.usdc = await usdcTransfer(k.p.txHash, `make-up visit ${k.visitId}`); }
+    else must(k.rv?.decision === 'hold' && !k.p, `make-up visit ${k.visitId}: not the agreement -> held, nothing paid`);
+    checks += 2;
+  }
+  A2A = { lines, ag, mks };
+}
 if (PROBE) { must(UUID.test(PROBE.flowId), 'probe flow id'); PROBE.usdc = await usdcTransfer(PROBE.txHash, 'standalone probe'); }
 must(checks >= visits.length * 3, `too few checks (${checks})`);
 console.log(`chain checks passed: ${checks} (visits ${visits.length}, paid ${visits.filter((v) => v.p).length})`);
@@ -251,6 +282,15 @@ const html = `<!doctype html>
 
 ${FILM_OTHER ? `<section class="card"><h2>The first testnet run, filmed (71 s)</h2>` : `<section class="card"><h2>The run in 71 seconds</h2>`}<video controls preload="none" playsinline width="1920" height="1080" poster="poster.jpg" src="caremandate-demo.mp4"></video><p class="small">Captions only, no sound. ${FILM_OTHER ? `Filmed on an earlier run (<code>${esc(FILM_OTHER)}</code>, before the payment-record, cap and agency-receipt features); the record below is of this run. ` : ''}<a href="caremandate-demo.mp4">Open the video file</a>.</p></section>
 
+${MAIN?.visit ? `<section class="card judge" id="mainnet-check"><h2>Check the mainnet visit in 30 seconds</h2>
+<p class="small">One visit ran end to end on <b>HSK Chain mainnet</b>. This button reads it from the mainnet contract right now (<code>visits(${MAIN.visit.visitId})</code> and <code>payments(${MAIN.visit.visitId})</code>, read-only calls to ${esc(CHAINS.mainnet.rpc.replace(/^https:\/\//, ''))}) and compares each field with what this page says.</p>
+<dl class="expect"><div><dt>This page says</dt><dd>status <b>Paid</b> · paymentRef <code>${esc(hx(keccak256(toBytes(MAIN.visit.flowId)), 10))}</code> (keccak256 of HSP flow ${esc(MAIN.visit.flowId.slice(0, 8))}…) · paid ${esc(String(MAIN.visit.paidRaw))} USDC units (${usd(MAIN.visit.paidRaw)}) · settlement tx <code>${esc(hx(MAIN.visit.settlementTx, 10))}</code> · agency acknowledged <b>yes</b></dd></div></dl>
+<button id="mcheck" class="go" type="button" data-rpc="${CHAINS.mainnet.rpc}" data-chain="0xb1" data-contract="${esc(MAIN.contract)}" data-mvisit="${MAIN.visit.visitId}"
+ data-status="Paid" data-ref="${esc(keccak256(toBytes(MAIN.visit.flowId)).toLowerCase())}" data-paid="${esc(String(MAIN.visit.paidRaw))}" data-stx="${esc(MAIN.visit.settlementTx.toLowerCase())}" data-ack="true"
+ data-sel-visits="${toFunctionSelector('visits(uint256)')}" data-sel-payments="${toFunctionSelector('payments(uint256)')}" hidden>Re-check on HSK Chain mainnet</button>
+<noscript><p class="small">The check needs JavaScript. Without it: open the <a href="${CHAINS.mainnet.explorer}/address/${esc(MAIN.contract)}?tab=read_contract" rel="noopener">contract on the explorer</a>, read visits(${MAIN.visit.visitId}) and payments(${MAIN.visit.visitId}).</p></noscript>
+<ul id="mcheckout" class="checks small" aria-live="polite"></ul></section>` : ''}
+
 <section class="card stat" aria-label="Run summary"><div><b>${visits.length}</b>visits</div><div><b>${paidN}</b>paid via HSP</div><div><b>${noN}</b>not paid</div><div><b>${heldN}</b>held for Mina</div></section>
 
 <section class="card"><h2>Mina's rules, on chain</h2>
@@ -264,6 +304,14 @@ ${V2 ? `<div><dt>Won to test USDC, on chain</dt><dd>${esc(String(m.rawPerMillion
 ${probe ? `<section class="card"><h2>Mina's agent reads every note</h2><p class="small">Mum's yes says the carer came; the note says what happened. Before it pays, Mina's agent reads the carer's note against her care plan (lunch, medicines, a walk; at least 60 minutes; arrival near the booked time). Rules always run; a language model (${esc(probe.model)}, free tier) reads the note too and can only add a hold, never lift one. The note is untrusted text written by the other side. A held visit stays unpaid, nothing is ordered from HSP, and Mina sees why and decides. The live model's answers, ${esc(at2(new Date(probe.at), HM))}:</p>
 <dl>${probe.results.map((r) => `<div><dt>${r.decision === 'pay' ? '<b class="ok">pay</b>' : '<b class="no">hold</b>'}</dt><dd><span class="q">“${esc(NOTES[r.note] || r.note)}”</span><span class="h">rules: ${r.rules.length ? esc(r.rules.join(', ')) : 'nothing'}${r.model?.reasons?.length ? ` · model: ${esc(r.model.reasons.join('; '))}` : ' · model: pay'}</span></dd></div>`).join('')}</dl>
 ${rgate ? `<p class="small"><b class="ok">PASS</b>, ${rgate.checks} checks: an offline end-to-end run (<code>CM_SCENARIO=review bash app/test/e2e-offline-qa.sh</code>) where Mum says yes to a visit whose note says 20 minutes, the wrong time and no walk. The agent held it; HSP was asked for nothing until Mina pressed Pay anyway. With the check switched off (<code>REVIEW_OFF=1</code>) the same run pays it unread and the gate fails.</p>` : ''}</section>` : ''}
+
+${A2A ? (() => {
+  const R0 = DEFAULT_MAKEUP_RULES, slot = (x) => span2(Number(x.proposal.slotStart) * 1000, Number(x.proposal.slotEnd) * 1000);
+  return `<section class="card" id="a2a"><h2>A missed visit: the two agents agree a make-up</h2>
+<p class="small">Mum said visit ${esc(String(A2A.lines[0].missedVisitId))} did not happen, so it is never paid. The agency's agent then offers a make-up visit to Mina's agent. Mina's agent answers under her rules: ${String(R0.startHour).padStart(2, "0")}:00 to ${R0.endHour}:00 Korea time, within ${R0.maxDaysAfter} days, ${R0.minMinutes} to ${R0.maxMinutes} minutes, never dearer than the missed visit, and inside her limit of ${m.weeklyMax} visits a week (read from the contract). Each offer is EIP-712 typed data signed with the agency's key from the mandate; each answer is signed with the key of Mina's agent from the mandate, and put on HSK Chain before the agency hears it (a transaction from Mina's agent whose input is the two digests). The contract is unchanged: the make-up visit's receipt, whose hash goes on chain when it is posted, carries both signed messages, and Mina's agent pays a visit that says it is a make-up only if it matches what it agreed.</p>
+<dl>${A2A.lines.map((x) => `<div><dt>Offer ${x.n}${x.n === 1 ? ' (the carer\'s free evening)' : ''}</dt><dd>${esc(slot(x))}, ${esc(won(x.proposal.amount))}<span class="h">${x.accept ? '<b class="ok">accepted</b>: fits every rule.' : `<b class="no">declined</b>: ${esc((x.text || []).map((r) => r.text).join(' '))}`}</span><span class="h">answer on chain ${txl(x.anchorTx)} · offer signed by the agency <code>${esc(hx(m.agency, 6))}</code>, answer by Mina's agent <code>${esc(hx(m.familyAgent, 6))}</code> (both re-checked when this page was built)</span></dd></div>`).join('')}
+${A2A.mks.map((k) => `<div><dt>Visit ${k.visitId}: ${k.on.status === 'Paid' ? 'the agreed make-up' : 'a second visit claiming the same agreement'}</dt><dd>${k.on.status === 'Paid' ? `<b class="ok">paid</b> · Mum said yes, it matched the agreed slot and price · ${usd(k.usdc)} via HSP · ${txl(k.p.markPaidTx)}` : `<b class="no">held for Mina, nothing ordered from HSP</b><ul class="h">${(k.rv.reasons || []).map((r) => `<li>${esc(r)}</li>`).join('')}</ul>`}<span class="h">${esc(visitAt2(k.rc.visitTime))} · post ${txl(k.tx)}</span></dd></div>`).join('')}</dl>
+${A2A.mks.length ? '' : `<p class="small">The agreed slot is after this run ended, so the make-up visit itself is not in this record. The offline test <code>CM_SCENARIO=a2a bash app/test/e2e-offline-qa.sh</code> moves a local chain to the slot: the agreed make-up is paid, and a second visit claiming the same agreement outside its slot is held.</p>`}</section>`; })() : ''}
 
 <h2 class="sec">Every visit</h2>
 ${visits.map(card).join('\n')}
@@ -325,10 +373,47 @@ button.go[disabled]{opacity:.55;cursor:wait}button:focus-visible,a:focus-visible
 .live:empty{display:none}.live{margin:8px 0 0}.live.ok{color:var(--ok)}.live.bad{color:var(--no)}
 video{width:100%;height:auto;border-radius:12px;display:block;background:#000;margin:4px 0 8px}
 footer{margin-top:22px}footer p{margin:6px 0}
+.judge{border:2px solid var(--ok)}ul.checks{list-style:none;margin:10px 0 0;padding:0}ul.checks li{padding:4px 0;overflow-wrap:anywhere}ul.checks li.ok{color:var(--ok)}ul.checks li.bad{color:var(--no)}ul.checks li b{color:inherit}
 `;
 
-// live.js: read-only eth_call of visits(id). Strict input checks; no other network target; nothing signed or sent.
+// live.js: read-only eth_calls. (1) the mainnet visit: visits(id) + payments(id) on HSK Chain mainnet vs the page's numbers;
+// (2) every testnet visit: visits(id). Strict input checks; only the two fixed RPC origins; nothing signed or sent.
 const live = `'use strict';
+(function () {
+  var b = document.getElementById('mcheck'); if (!b) return;
+  var out = document.getElementById('mcheckout'), d = b.dataset;
+  var ST = ['None', 'Posted', 'Confirmed', 'Held', 'Paid', 'Rejected'];
+  if (d.rpc !== 'https://mainnet.hsk.xyz' || !/^0x[0-9a-f]{40}$/i.test(d.contract) || !/^[0-9]{1,6}$/.test(d.mvisit) || !/^0x[0-9a-f]{8}$/.test(d.selVisits) || !/^0x[0-9a-f]{8}$/.test(d.selPayments)) return;
+  b.hidden = false;
+  function rpc(method, params, words) {
+    var ctl = new AbortController(); var t = setTimeout(function () { ctl.abort(); }, 15000);
+    return fetch(d.rpc, { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'omit', referrerPolicy: 'no-referrer', signal: ctl.signal,
+      body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: method, params: params }) })
+      .then(function (r) { clearTimeout(t); if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
+      .then(function (s) { if (s.length > 10000) throw new Error('reply too large'); var j = JSON.parse(s);
+        var re = words ? new RegExp('^0x[0-9a-f]{' + (64 * words) + '}$', 'i') : /^0x[0-9a-f]{1,16}$/i;
+        if (typeof j.result !== 'string' || !re.test(j.result)) throw new Error('unexpected reply'); return j.result.slice(2).toLowerCase(); });
+  }
+  function call(sel, words) { return rpc('eth_call', [{ to: d.contract, data: sel + parseInt(d.mvisit, 10).toString(16).padStart(64, '0') }, 'latest'], words); }
+  function line(ok, label, page, chain) { var li = document.createElement('li'); li.className = ok ? 'ok' : 'bad';
+    li.textContent = (ok ? 'match: ' : 'MISMATCH: ') + label + (ok ? ' = ' + chain : ' (page ' + page + ', chain ' + chain + ')'); out.appendChild(li); return ok; }
+  b.addEventListener('click', function () {
+    b.disabled = true; out.textContent = ''; var t0 = Date.now();
+    var li = document.createElement('li'); li.textContent = 'Reading visit ' + d.mvisit + ' from HSK Chain mainnet…'; out.appendChild(li);
+    Promise.all([rpc('eth_chainId', [], 0), call(d.selVisits, 6), call(d.selPayments, 4)]).then(function (r) {
+      out.textContent = ''; var n = 0, w = r[1], p = r[2];
+      n += line(r[0] === 'b1', 'chain id', '177', String(parseInt(r[0], 16)));
+      n += line(ST[parseInt(w.slice(64 * 3, 64 * 4), 16)] === d.status, 'status', d.status, ST[parseInt(w.slice(64 * 3, 64 * 4), 16)] || '?');
+      var ref = '0x' + w.slice(64 * 5, 64 * 6); n += line(ref === d.ref, 'paymentRef (keccak256 of the HSP flow id)', d.ref.slice(0, 12) + '…', ref.slice(0, 12) + '…');
+      var paid = BigInt('0x' + p.slice(0, 64)).toString(); n += line(paid === d.paid, 'paid (USDC units)', d.paid, paid);
+      var stx = '0x' + p.slice(64, 128); n += line(stx === d.stx, 'settlement tx', d.stx.slice(0, 12) + '…', stx.slice(0, 12) + '…');
+      var ack = parseInt(p.slice(192, 256), 16) === 1; n += line(String(ack) === d.ack, 'agency acknowledged', 'yes', ack ? 'yes' : 'no');
+      var s = document.createElement('li'); s.className = n === 6 ? 'ok' : 'bad';
+      s.innerHTML = '<b>' + (n === 6 ? 'All 6 match' : (6 - n) + ' of 6 do not match') + '</b> (HSK Chain mainnet, ' + ((Date.now() - t0) / 1000).toFixed(1) + ' s).'; out.appendChild(s);
+    }).catch(function (e) { out.textContent = ''; line(false, 'read', 'visit ' + d.mvisit, e.message); })
+      .then(function () { b.disabled = false; });
+  });
+})();
 (function () {
   var b = document.getElementById('check'); if (!b) return;
   var out = document.getElementById('checkout');

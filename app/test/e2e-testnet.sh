@@ -9,6 +9,11 @@
 #  - v3 (2026-11-26): each visit carries the carer's note; Mina's agent reads it before paying (lib/review.mjs: rules + a free-tier
 #    model when $CM_SECRETS/groq.env has GROQ_API_KEY, else rules only). CM_ODD_VISIT (default 4) gets an odd note: the agent must
 #    HOLD it, Mina reads why and presses "Pay anyway" (gate scenario testnet-review). CM_ODD_VISIT=0: all notes normal (gate testnet).
+#  - v4 (2026-11-26): agent to agent. When Mum says No to visit 2, the agency's agent (agency-watch.mjs) proposes a make-up slot to Mina's
+#    agent (server.mjs /api/a2a/makeup), EIP-712 signed by the mandate's agency key; Mina's agent decides under her rules (hours, weekly
+#    limit, 7 days, price), signs its decision with the familyAgent key and anchors it on HSK testnet (a 0-value tx to itself whose input
+#    is the decision + proposal digests). The first offer (the carer's evening) must be declined; a later one accepted. Gate: GATE_A2A=1.
+#    The make-up visit itself falls after the run (a real future slot): the offline scenario CM_SCENARIO=a2a pays it on a local chain.
 # Deploys CareMandate + Mina's mandate on HSK testnet, the agency posts 5 visits, Mum answers in the real page (yes/no/yes/yes/yes),
 # Mina approves the held 4th visit; every confirmed visit is paid through HSP (HSP_MODE=qa) and the HSP flow id is recorded on chain.
 # Gas: ~2.3M on HSK testnet (test HSK from the faucet). HSP: 4 x 0.01 USD of test USDC from the QA payer (holds ~19.9).
@@ -56,13 +61,15 @@ node server.mjs > $OUTD/server.log 2>&1 & SV=$!; trap 'kill $SV 2>/dev/null || t
 for i in $(seq 1 60); do curl -sf -o /dev/null http://127.0.0.1:8791/api/config && break; kill -0 $SV 2>/dev/null || break; sleep 0.5; done
 curl -sf -o /dev/null http://127.0.0.1:8791/api/config || { echo "SERVER DID NOT START ($OUTD/server.log):"; cat $OUTD/server.log; exit 3; }
 # the agency's own agent: watches PaymentSettled, checks the transfer on $HSP_NETWORK itself, acknowledges on chain
-SETTLE_RPC=$SRPC SETTLE_TOKEN=$STOK AGENCY_FROM_BLOCK=$FROMBLK AGENCY_WATCH_MS=10000 AGENCY_MAX_FAILS=30 node agency-watch.mjs > $OUTD/agency-watch.log 2>&1 & AW=$!
+SETTLE_RPC=$SRPC SETTLE_TOKEN=$STOK AGENCY_FROM_BLOCK=$FROMBLK AGENCY_WATCH_MS=10000 AGENCY_MAX_FAILS=30 FAMILY_AGENT_URL=http://127.0.0.1:8791 AGENCY_A2A_OUT=$OUTD/a2a-agency.jsonl node agency-watch.mjs > $OUTD/agency-watch.log 2>&1 & AW=$!
 trap 'kill $SV $AW 2>/dev/null || true' EXIT
 NOW=$(cast block latest -f timestamp --rpc-url $HSKRPC)
 i=0; for c in "Tue visit" "Thu visit" "Fri visit" "Sat visit" "Sun visit"; do i=$((i+1)); T=$((NOW-7200+i*60)); K=$(node test/note.mjs key $i "$CM_ODD_VISIT"); node agency.mjs 1 $T 45000 "Ji-woo" "$c: lunch, medicines, a short walk" "$(node test/note.mjs $K $T)" | tee -a $OUTD/agency.log; done
 set +e; node agency.mjs 1 $((NOW-600)) 46000 "Ji-woo" "Mon visit, priced 46,000 won" > $OUTD/captrip.json; RC=$?; set -e
 cat $OUTD/captrip.json; [ $RC = 4 ] || { echo "cap trip: expected refusal rc 4, got $RC"; exit 1; }
 MUMPK=$MUMPK node test/mum-clicks.cjs 2>&1 | tee $OUTD/result.log || true   # the gate below decides
+for i in $(seq 1 36); do grep -q '"accept":true' $OUTD/a2a-agency.jsonl 2>/dev/null && break; sleep 5; done   # the make-up agreement: up to 3 min
+cat $OUTD/a2a-agency.jsonl 2>/dev/null | jq -c '{n, accept, reasons: [.reasons[].code], slotStart: .proposal.slotStart, slotEnd: .proposal.slotEnd, anchorTx}' || echo "no a2a exchange"
 python3 -c "
 import json; s=json.load(open('$OUTD/state.json'))
 for k,p in sorted(s['payments'].items()): print('visit',k,p.get('mode'),p.get('status'),p.get('flowId'),p.get('txHash'),p.get('markPaidTx'))" | tee $OUTD/payments.txt
@@ -70,5 +77,5 @@ for i in $(seq 1 60); do [ "$(grep -c '"event":"ack"' $OUTD/agency-watch.log || 
 N=$(grep -cE "^visit [0-9]+ qa payment-(safe|finalized) [0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12} 0x[0-9a-fA-F]{64} 0x[0-9a-fA-F]{64}$" $OUTD/payments.txt || true)
 echo "real HSP flows settled and recorded on chain: $N/4 (server log: $OUTD/server.log)"
 grep -q "E2E PASS" $OUTD/result.log && [ "$N" = 4 ] && ! grep -qi mock $OUTD/payments.txt \
-  && SETTLE_RPC=$SRPC SETTLE_TOKEN=$STOK node test/e2e-gate.mjs $OUTD $GATE | tee $OUTD/gate.json \
+  && GATE_A2A=1 SETTLE_RPC=$SRPC SETTLE_TOKEN=$STOK node test/e2e-gate.mjs $OUTD $GATE | tee $OUTD/gate.json \
   && echo "testnet e2e PASS with real HSP on $HSP_NETWORK ($OUTD)" || { echo "E2E FAILED ($OUTD)"; exit 1; }

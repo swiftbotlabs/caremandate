@@ -1,0 +1,351 @@
+{
+ "messages": [
+  {
+   "at": "2026-11-26T06:11:46.848Z",
+   "text": "Saturday's visit is the 4th this week. It waits for you: approve it on your page if you want it paid.",
+   "kind": "warn"
+  },
+  {
+   "at": "2026-11-26T06:11:39.906Z",
+   "text": "Saturday's visit is the 4th this week. It waits for you: approve it on your page if you want it paid.",
+   "kind": "warn"
+  },
+  {
+   "at": "2026-11-26T06:11:02.471Z",
+   "text": "Friday's visit: approved by you, paid (45,000 won visit) via HSP: $0.03 test USDC on hashkey-testnet.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T06:10:54.364Z",
+   "text": "Friday's visit: confirmed by Mum, paid (45,000 won visit) via HSP: $0.03 test USDC on hashkey-testnet.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T06:10:46.789Z",
+   "text": "Friday's visit: confirmed by Mum, paid (45,000 won visit) via HSP: $0.03 test USDC on hashkey-testnet.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T06:10:41.984Z",
+   "text": "Friday's visit is the 4th this week. It waits for you: approve it on your page if you want it paid.",
+   "kind": "warn"
+  },
+  {
+   "at": "2026-11-26T06:10:28.560Z",
+   "text": "Friday's visit: confirmed by Mum, paid (45,000 won visit) via HSP: $0.03 test USDC on hashkey-testnet.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T06:10:28.305Z",
+   "text": "Friday's missed visit: the agency's agent offered a make-up on Sat 14 Nov, 19:30 to 21:00 (Korea time, 45,000 won). It fits your rules, so I accepted. It is paid only if Mum confirms it.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-26T06:10:28.141Z",
+   "text": "Friday's visit: Mum says it did not happen. Nothing paid.",
+   "kind": "warn"
+  }
+ ],
+ "receipts": {
+  "0xed3382b34a5dde14cad4c4d58be6c9037316ea366ebbd9ee22040c88ea86da32": {
+   "mandateId": 1,
+   "visitTime": 1794528063,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Tue visit: lunch, medicines, a short walk",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 09:03, left 10:36. Cooked rice porridge for lunch and she ate most of it. Gave her morning pills with water. 25-minute walk to the park; she was in good spirits."
+  },
+  "0xd95fe3a03ade76cdc4f93516128918e7116095aae159e5363436de4df6655928": {
+   "mandateId": 1,
+   "visitTime": 1794528123,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Thu visit: lunch, medicines, a short walk",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 09:00, left 10:32. Made soybean soup and rice for lunch. Medicines taken at 09:42 as on the chart. Short walk round the block, slow but steady."
+  },
+  "0x58abcc2719e3a0c4d5e10872d243805016bc7a4c7a500e5775585fbab14ed843": {
+   "mandateId": 1,
+   "visitTime": 1794528183,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Fri visit: lunch, medicines, a short walk",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 09:03, left 10:43. Lunch: steamed fish and greens. Pills given after lunch. We walked to the bench by the river and back."
+  },
+  "0x85e8609186e5e99089e8b461f6f1513dbf44b9f8f7f5b6c677080a222b87901a": {
+   "mandateId": 1,
+   "visitTime": 1794528243,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Sat visit: lunch, medicines, a short walk",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 09:06, left 10:39. Cooked rice porridge for lunch and she ate most of it. Gave her morning pills with water. 25-minute walk to the park; she was in good spirits."
+  },
+  "0x8920e61a344ddcd426a9c2f166a43d45b086731d95026bfb7b35d1e750244c21": {
+   "mandateId": 1,
+   "visitTime": 1794528303,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Sun visit: lunch, medicines, a short walk",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 09:03, left 10:35. Made soybean soup and rice for lunch. Medicines taken at 09:45 as on the chart. Short walk round the block, slow but steady."
+  },
+  "0x2417c36255f56a6548bc5720fdea1a1d25be0af1b0952c84a228cec28a322802": {
+   "mandateId": 1,
+   "visitTime": 1794652200,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Make-up for the missed visit: lunch, medicines, a short walk",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 19:32, left 21:05. Cooked rice porridge for lunch and she ate most of it. Gave her morning pills with water. 25-minute walk to the park; she was in good spirits.",
+   "makeup": {
+    "missedVisitId": 2,
+    "proposal": {
+     "mandateId": "1",
+     "missedVisitId": "2",
+     "slotStart": "1794652200",
+     "slotEnd": "1794657600",
+     "amount": "45000",
+     "carer": "Ji-woo",
+     "nonce": "1795673425000",
+     "expires": "1794556855"
+    },
+    "proposalSig": "0x3c81bb453f8ff92d2f3d9e03b2f71ce9dc3f6bbde0b9b280b26097c1f371e9cf045092690b6805184002adf360009816e85f7b205bb25f6169d79fef059b413a1b",
+    "decision": {
+     "proposal": "0xd0f52dc9b9610879c08fe05760c759b4f7449a602d2fa68f4e3252ddc8d0ffac",
+     "accept": true,
+     "reasons": "",
+     "decidedAt": "1794535255"
+    },
+    "decisionSig": "0xcb33a225138ef440baebfdf8ff51ab8f703e2c371b30d55147abd6749d022ae0405ec90d8f4b6af154e119c2d01bdc60034224abf5b5497495257429d18653f51b",
+    "anchorTx": "0x45c12f4ab73b780c8424bbb61a412700723171056494be7223b1d6026e480fa1"
+   }
+  },
+  "0x0e13f97ac7d0544b278d9286c51823248a1eb61a72eab02d3e73ed43df85facb": {
+   "mandateId": 1,
+   "visitTime": 1794657720,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Make-up for the missed visit (again)",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 21:00, left 22:32. Made soybean soup and rice for lunch. Medicines taken at 21:42 as on the chart. Short walk round the block, slow but steady.",
+   "makeup": {
+    "missedVisitId": 2,
+    "proposal": {
+     "mandateId": "1",
+     "missedVisitId": "2",
+     "slotStart": "1794652200",
+     "slotEnd": "1794657600",
+     "amount": "45000",
+     "carer": "Ji-woo",
+     "nonce": "1795673425000",
+     "expires": "1794556855"
+    },
+    "proposalSig": "0x3c81bb453f8ff92d2f3d9e03b2f71ce9dc3f6bbde0b9b280b26097c1f371e9cf045092690b6805184002adf360009816e85f7b205bb25f6169d79fef059b413a1b",
+    "decision": {
+     "proposal": "0xd0f52dc9b9610879c08fe05760c759b4f7449a602d2fa68f4e3252ddc8d0ffac",
+     "accept": true,
+     "reasons": "",
+     "decidedAt": "1794535255"
+    },
+    "decisionSig": "0xcb33a225138ef440baebfdf8ff51ab8f703e2c371b30d55147abd6749d022ae0405ec90d8f4b6af154e119c2d01bdc60034224abf5b5497495257429d18653f51b",
+    "anchorTx": "0x45c12f4ab73b780c8424bbb61a412700723171056494be7223b1d6026e480fa1"
+   }
+  }
+ },
+ "payments": {
+  "1": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T06:10:20.617Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "33993",
+   "flowId": "MOCKHSP-ae3afe35-265b-44c0-94e6-17cebba48f28",
+   "paymentRequestId": "CARE-PR-20261126061020-84a75c",
+   "paidRaw": "30002",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0x4a88f497d3c6716a39d10a300f964d20580b2cd56129efd075a8fb538ff9e6eb",
+   "network": "hashkey-testnet",
+   "attributionVerified": true,
+   "token": "0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6",
+   "chainId": 133,
+   "retryable": false,
+   "settledAt": "2026-11-26T06:10:27.127Z",
+   "markPaidTx": "0xff981b72324665c34470d338c9af2f0e66858573968c0c4240ef37a85a7c17b5"
+  },
+  "3": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T06:10:35.728Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "33993",
+   "flowId": "MOCKHSP-e1cbed54-e9c5-47cf-b12d-c7b20510ac4b",
+   "paymentRequestId": "CARE-PR-20261126061035-e39d51",
+   "paidRaw": "30002",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0x91b4d893b1fa847461f8b7f963faeddfface77cf624870c53094b05b71745bf7",
+   "network": "hashkey-testnet",
+   "attributionVerified": true,
+   "token": "0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6",
+   "chainId": 133,
+   "retryable": false,
+   "settledAt": "2026-11-26T06:10:42.425Z",
+   "markPaidTx": "0x50c426524e3d29ba174ab93e1e649f9ffab24f3cafc9b87f8bfc973b71e4483a"
+  },
+  "4": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T06:10:38.780Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "33993",
+   "flowId": "MOCKHSP-82d17e02-2ac9-42ed-a42b-e489c4947b60",
+   "paymentRequestId": "CARE-PR-20261126061046-2bcbc4",
+   "paidRaw": "30002",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0xe0e426565c1f9668f89f6cb4d85e161a09c08ae76c964e068401b1370dc3a2c0",
+   "network": "hashkey-testnet",
+   "attributionVerified": true,
+   "token": "0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6",
+   "chainId": 133,
+   "retryable": false,
+   "settledAt": "2026-11-26T06:10:53.551Z",
+   "markPaidTx": "0xce913662218bdd1e18555227c77b3542de170d81f66ce98bde5dec6f5234cef1"
+  },
+  "5": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-26T06:10:47.428Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "33993",
+   "flowId": "MOCKHSP-338b85e6-9905-4ea0-8096-cde4028a93bb",
+   "paymentRequestId": "CARE-PR-20261126061054-0b631f",
+   "paidRaw": "30002",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0x32c6b8aacc204effddaa85f02baf5e70a9bb399dc4de790dbd9ac19c3d35f987",
+   "network": "hashkey-testnet",
+   "attributionVerified": true,
+   "token": "0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6",
+   "chainId": 133,
+   "retryable": false,
+   "settledAt": "2026-11-26T06:11:01.656Z",
+   "markPaidTx": "0x74ba511ff7b54c8b7857cae359f11157e5237f9ffb7dafeb657463134101306e"
+  }
+ },
+ "reviews": {
+  "1": {
+   "at": "2026-11-26T06:10:20.612Z",
+   "decision": "pay",
+   "source": "rules",
+   "reasons": [],
+   "rules": [],
+   "facts": {
+    "arrive": 543,
+    "leave": 636,
+    "visitStart": "09:01",
+    "minutes": 93
+   },
+   "model": {
+    "error": "off"
+   }
+  },
+  "3": {
+   "at": "2026-11-26T06:10:35.723Z",
+   "decision": "pay",
+   "source": "rules",
+   "reasons": [],
+   "rules": [],
+   "facts": {
+    "arrive": 543,
+    "leave": 643,
+    "visitStart": "09:03",
+    "minutes": 100
+   },
+   "model": {
+    "error": "off"
+   }
+  },
+  "4": {
+   "at": "2026-11-26T06:10:38.765Z",
+   "decision": "pay",
+   "source": "rules",
+   "reasons": [],
+   "rules": [],
+   "facts": {
+    "arrive": 546,
+    "leave": 639,
+    "visitStart": "09:04",
+    "minutes": 93
+   },
+   "model": {
+    "error": "off"
+   }
+  },
+  "5": {
+   "at": "2026-11-26T06:10:47.425Z",
+   "decision": "pay",
+   "source": "rules",
+   "reasons": [],
+   "rules": [],
+   "facts": {
+    "arrive": 543,
+    "leave": 635,
+    "visitStart": "09:05",
+    "minutes": 92
+   },
+   "model": {
+    "error": "off"
+   }
+  }
+ },
+ "a2a": {
+  "decisions": [
+   {
+    "at": "2026-11-26T06:10:28.207Z",
+    "proposal": {
+     "mandateId": "1",
+     "missedVisitId": "2",
+     "slotStart": "1794652200",
+     "slotEnd": "1794657600",
+     "amount": "45000",
+     "carer": "Ji-woo",
+     "nonce": "1795673425000",
+     "expires": "1794556855"
+    },
+    "proposalSig": "0x3c81bb453f8ff92d2f3d9e03b2f71ce9dc3f6bbde0b9b280b26097c1f371e9cf045092690b6805184002adf360009816e85f7b205bb25f6169d79fef059b413a1b",
+    "proposalHash": "0xd0f52dc9b9610879c08fe05760c759b4f7449a602d2fa68f4e3252ddc8d0ffac",
+    "decision": {
+     "proposal": "0xd0f52dc9b9610879c08fe05760c759b4f7449a602d2fa68f4e3252ddc8d0ffac",
+     "accept": true,
+     "reasons": "",
+     "decidedAt": "1794535255"
+    },
+    "decisionSig": "0xcb33a225138ef440baebfdf8ff51ab8f703e2c371b30d55147abd6749d022ae0405ec90d8f4b6af154e119c2d01bdc60034224abf5b5497495257429d18653f51b",
+    "decisionHash": "0xd5e21329afaf6b1769dd0d1f02598bf690da05859c7cba593a62e90a509fd657",
+    "accept": true,
+    "reasons": [],
+    "hints": {},
+    "anchorTx": "0x45c12f4ab73b780c8424bbb61a412700723171056494be7223b1d6026e480fa1",
+    "rulesOff": true,
+    "missedVisitId": 2
+   }
+  ],
+  "used": {},
+  "count": {
+   "2": 1
+  }
+ }
+}

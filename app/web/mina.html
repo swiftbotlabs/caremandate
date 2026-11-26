@@ -4,6 +4,7 @@
 <h1>Mum's care visits</h1><p class="sub" id="rules">Loading…</p>
 <div class="card"><div class="stat"><div><b id="sPaid">-</b>paid</div><div><b id="sWait">-</b>waiting</div><div><b id="sNo">-</b>not paid</div></div></div>
 <div class="card"><h3 style="margin:0 0 6px">Messages from your agent</h3><div id="msgs"></div></div>
+<div class="card a2a-card" id="a2aCard" hidden><h3 style="margin:0 0 6px">Make-up visits: your agent and the agency's agent</h3><p class="small" id="a2aRules"></p><div id="a2a"></div></div>
 <div class="card"><h3 style="margin:0 0 6px">Every visit</h3><div id="visits"></div></div>
 <p class="small" id="chain"></p>
 </main>
@@ -30,7 +31,8 @@ function reviewLine(v) {
   const r = v.review, note = v.receipt?.note;
   let t = note ? `<div class="small note">Carer's note: “${esc(note)}”</div>` : '';
   if (!r) return t;
-  const src = r.source === 'model+rules' ? 'note read by your agent (model + rules)' : r.source === 'rules' ? 'note checked by your agent (rules; model unavailable)' : r.source === 'off' ? 'note check OFF (test)' : 'note check';
+  const src = r.source === 'model+rules' ? 'note read by your agent (model + rules)' : r.source === 'rules' ? 'note checked by your agent (rules; model unavailable)' : r.source === 'off' ? 'note check OFF (test)' : r.source === 'a2a' ? 'make-up check against the agreement your agent signed' : 'note check';
+  if (r.makeup?.matched) t += `<div class="small">Make-up for visit ${esc(r.makeup.missedVisitId)}: matches the slot and price your agent agreed with the agency's agent.</div>`;
   if (r.decision === 'pay') return t + `<div class="small">${esc(src)}: nothing unusual, paid without asking you.</div>`;
   t += `<div class="small warn held"><b>Your agent held this payment</b> (${esc(src)}):<ul>${(r.reasons || []).map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
   t += r.released ? `You checked it and released the payment.</div>` : `Nothing has been paid. Mum said the visit happened.</div>`;
@@ -54,6 +56,17 @@ async function load() {
   document.querySelectorAll('.approve').forEach((b) => b.onclick = async () => { b.disabled = true; await fetch('/api/approve', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ visitId: +b.dataset.v }) }); load(); });
   document.querySelectorAll('.release').forEach((b) => b.onclick = async () => { b.disabled = true; await fetch('/api/release', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ visitId: +b.dataset.v }) }); load(); });
   document.querySelectorAll('.retry').forEach((b) => b.onclick = async () => { b.disabled = true; await fetch('/api/retry', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ visitId: +b.dataset.v }) }); load(); });
+  // agent to agent: each make-up proposal from the agency's agent, and the decision your agent signed and put on chain
+  const a2a = await fetch('/api/a2a').then((r) => r.json()).catch(() => []);
+  const card = document.getElementById('a2aCard'); card.hidden = !a2a.length;
+  const kst = (t) => new Date(Number(t) * 1000).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Seoul' });
+  const mr = cfg.makeupRules;
+  if (mr) document.getElementById('a2aRules').textContent = `Your rules for a make-up: ${String(mr.startHour).padStart(2, '0')}:00 to ${mr.endHour}:00 Korea time, within ${mr.maxDaysAfter} days of the missed visit, ${mr.minMinutes} to ${mr.maxMinutes} minutes, never dearer than the missed visit, and inside your ${cfg.weeklyMax}-a-week limit. Your agent signs each answer and records it on chain.`;
+  const used = new Set(vs.filter((v) => v.review?.makeup?.matched).map((v) => v.review.makeup.decisionHash));
+  document.getElementById('a2a').innerHTML = a2a.map((d) => `<div class="row a2a"><div><b>Visit ${esc(d.missedVisitId)} missed</b> · offer: ${esc(kst(d.proposal.slotStart))} to ${esc(kst(d.proposal.slotEnd).slice(-5))}, ${Number(d.proposal.amount).toLocaleString('en-US')} won
+    <div class="small">${d.accept ? (used.has(d.decisionHash) ? 'Accepted. The make-up happened and Mum confirmed it.' : 'Accepted: fits your rules. Paid only if Mum confirms it.') : 'Declined: ' + esc((d.reasons || []).map((x) => x.text).join(' '))}</div>
+    <div class="small">signed by both agents · ${ex ? `<a href="${esc(ex)}/tx/${esc(d.anchorTx)}" target="_blank" rel="noopener">on chain</a>` : `on chain <code>${esc(String(d.anchorTx).slice(0, 12))}…</code>`}</div></div>
+    <div><span class="pill ${d.accept ? 'Paid' : 'Rejected'}">${d.accept ? 'accepted' : 'declined'}</span></div></div>`).join('');
   document.getElementById('chain').innerHTML = `Rules and every visit are on ${esc(cfg.network)}: contract ${ex ? `<a href="${esc(ex)}/address/${esc(cfg.contract)}" target="_blank" rel="noopener"><code>${esc(cfg.contract)}</code></a>` : `<code>${esc(cfg.contract)}</code>`}. Payments: HSP ${cfg.hspMode === 'mock' ? 'MOCK (test run, no money moves)' : 'QA, settling on ' + esc(cfg.hspNetwork)}.`;
 }
 load(); setInterval(load, 4000);

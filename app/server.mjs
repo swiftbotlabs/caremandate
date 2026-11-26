@@ -22,6 +22,7 @@ import { connect, send, visit, mandate, payment, ABI, ISSUE } from './lib/chain.
 import { payVisit, waitSettled, Refused } from './lib/hsp.mjs';
 import { usdFor, maxPayRaw, recordLimitRaw } from './lib/fx.mjs';
 import { reviewVisit, DEFAULT_PLAN } from './lib/review.mjs';
+import { domain as a2aDomain, parseProposal, proposalDigest, proposalSigner, decisionDigest, signDecision, decideMakeup, anchorData, checkMakeupClaim, plain, weekOf, kst, DEFAULT_MAKEUP_RULES } from './lib/a2a.mjs';
 
 const ROOT = path.dirname(new URL(import.meta.url).pathname);
 const log = (o) => console.log(JSON.stringify({ at: new Date().toISOString(), ...o }));
@@ -44,6 +45,9 @@ try { if (process.env.CM_CARE_PLAN) { const p = JSON.parse(process.env.CM_CARE_P
   if (!Array.isArray(p.tasks) || !p.tasks.length || p.tasks.length > 10 || !p.tasks.every((t) => typeof t === 'string' && t.length <= 30)) throw new Error('tasks');
   PLAN = { ...DEFAULT_PLAN, ...p, minMinutes: Number(p.minMinutes ?? DEFAULT_PLAN.minMinutes), startToleranceMin: Number(p.startToleranceMin ?? DEFAULT_PLAN.startToleranceMin) }; } }
 catch (e) { refuseStart('CM_CARE_PLAN is not a valid plan: ' + e.message); }
+// Mina's rules for make-up visits the agency's agent proposes (lib/a2a.mjs); CM_CARE_PLAN may carry {"makeup": {...}}.
+const MAKEUP = { ...DEFAULT_MAKEUP_RULES, ...(PLAN.makeup && typeof PLAN.makeup === 'object' ? Object.fromEntries(Object.entries(PLAN.makeup).filter(([k, v]) => k in DEFAULT_MAKEUP_RULES && (k === 'tz' ? typeof v === 'string' : Number.isFinite(v)))) : {}) };
+if (process.env.A2A_RULES_OFF === '1' && (process.env.CM_NET || 'local') !== 'local') refuseStart('A2A_RULES_OFF is a local test switch only');
 if (process.env.REVIEW_OFF === '1' && (process.env.CM_NET || 'local') !== 'local') refuseStart('REVIEW_OFF is a local test switch only');
 const ctx = connect();
 const C = process.env.CM_CONTRACT, M = Number(process.env.CM_MANDATE || 1);
@@ -96,10 +100,16 @@ async function reviewThenPay(vi, when, why) {
   if (prev?.decision === 'hold' && !prev.released) return { ...vi, reviewHeld: true, review: prev };
   if (!prev) {
     let r;
-    try { r = await reviewVisit({ receipt: st.receipts[vi.receiptHash] || null, onchainHash: vi.receiptHash, visitTime: vi.visitTime, plan: PLAN }); }
+    // a visit that says it is a make-up must match an agreement this agent signed (slot, price, used once); else it is held
+    const rcpt = st.receipts[vi.receiptHash] || null;
+    const mk = checkMakeupClaim({ receipt: rcpt, visitId: vi.id, visitTime: vi.visitTime, amount: vi.amount, mandateId: vi.mandateId, dom: A2A_DOM, agreements: (st.a2a?.decisions || []), used: st.a2a?.used || {} });
+    if (mk.claim && mk.hold.length) r = { at: new Date().toISOString(), decision: 'hold', source: 'a2a', reasons: mk.hold.map((x) => x.text), rules: mk.hold.map((x) => x.code), makeup: { decisionHash: mk.decisionHash || null, missedVisitId: mk.missedVisitId ?? null } };
+    else try { r = await reviewVisit({ receipt: rcpt, onchainHash: vi.receiptHash, visitTime: vi.visitTime, plan: PLAN }); if (mk.claim) r.makeup = { decisionHash: mk.decisionHash, missedVisitId: mk.missedVisitId, matched: true }; }
     catch (e) { r = { at: new Date().toISOString(), decision: 'hold', source: 'error', reasons: ['The note check failed, so the payment waits for you.'], rules: ['review_error'], model: { error: String(e.message).slice(0, 120) } }; }
-    st = load(); st.reviews = st.reviews || {}; st.reviews[vi.id] = r; save(st);
-    log({ event: 'review', visitId: vi.id, decision: r.decision, source: r.source, rules: r.rules, model: r.model?.name || null, modelDecision: r.model?.decision || null, modelError: r.model?.error || null, modelMs: r.model?.ms || null, reasons: r.reasons });
+    st = load(); st.reviews = st.reviews || {}; st.reviews[vi.id] = r;
+    if (r.makeup?.matched) { st.a2a = st.a2a || { decisions: [], used: {}, count: {} }; st.a2a.used[r.makeup.decisionHash] = vi.id; }   // one visit per agreement
+    save(st);
+    log({ event: 'review', visitId: vi.id, decision: r.decision, source: r.source, rules: r.rules, makeup: r.makeup || undefined, model: r.model?.name || null, modelDecision: r.model?.decision || null, modelError: r.model?.error || null, modelMs: r.model?.ms || null, reasons: r.reasons });
     if (r.decision === 'hold') {
       say(st, `${when}'s visit: Mum said it happened, but I am holding the payment until you look: ${r.reasons.slice(0, 3).join(' ')} Nothing has been paid. "Pay anyway" on your page pays it.`, 'warn'); save(st);
       return { ...vi, reviewHeld: true, review: r };
@@ -237,6 +247,53 @@ async function resume(id) {
   }).catch(() => {});
 }
 
+// ---- agent to agent: the agency's agent proposes a make-up slot for a missed visit; this agent decides under Mina's rules, signs its
+// decision (EIP-712, the familyAgent key on chain) and puts the decision digest on HSK Chain (0-value tx to itself) before answering.
+const A2A_DOM = a2aDomain(ctx.cfg.id, C);
+let a2aLock = Promise.resolve();
+function makeup(body) { const r = a2aLock.then(() => makeupOne(body)); a2aLock = r.catch(() => {}); return r; }   // one decision at a time
+async function makeupOne(body) {
+  let p; try { p = parseProposal(body.proposal); } catch (e) { const x = new Error(e.message); x.code = 400; throw x; }
+  const m = await mandate(ctx, C, M);
+  const signer = await proposalSigner(A2A_DOM, p, body.signature).catch(() => null);
+  if (!signer || signer.toLowerCase() !== m.agency.toLowerCase()) { const x = new Error('proposal not signed by the mandate agency'); x.code = 403; throw x; }
+  let st = load(); st.a2a = st.a2a || { decisions: [], used: {}, count: {} };
+  const ph = proposalDigest(A2A_DOM, p), mid = String(p.missedVisitId);
+  const seen = st.a2a.decisions.find((d) => d.proposalHash === ph); if (seen) return seen;   // the same signed proposal: the same answer
+  if ((st.a2a.count[mid] || 0) >= MAKEUP.maxProposals) { const x = new Error(`at most ${MAKEUP.maxProposals} proposals per missed visit`); x.code = 429; throw x; }
+  st.a2a.count[mid] = (st.a2a.count[mid] || 0) + 1; save(st);
+  const now = Number((await ctx.pub.getBlock()).timestamp);
+  const n = Number(await ctx.pub.readContract({ address: C, abi: ABI, functionName: 'visitCount' }));
+  const load_ = new Map(); let missed = null;
+  for (let i = 1; i <= n; i++) {
+    const v = await visit(ctx, C, i); if (v.mandateId !== M) continue;
+    if (i === Number(p.missedVisitId)) missed = v;
+    if (v.status !== 'Rejected' && v.status !== 'None') load_.set(weekOf(v.visitTime), (load_.get(weekOf(v.visitTime)) || 0) + 1);
+  }
+  if (Number(p.missedVisitId) > n) missed = null;
+  const agreed = st.a2a.decisions.filter((d) => d.accept && !st.a2a.used[d.decisionHash]).map((d) => ({ missedVisitId: Number(d.proposal.missedVisitId), slotStart: Number(d.proposal.slotStart) }));
+  const res = decideMakeup({ p, missed, mandate: m, weekLoad: (w) => load_.get(w) || 0, agreed, now, rules: MAKEUP, rulesOff: process.env.A2A_RULES_OFF === '1' });
+  const dec = { proposal: ph, accept: res.accept, reasons: res.reasons.map((x) => x.code).join(',').slice(0, 200), decidedAt: BigInt(now) };
+  const dh = decisionDigest(A2A_DOM, dec);
+  const sig = await signDecision(agent.account, A2A_DOM, dec);
+  // the decision goes on chain before the agency hears it: a 0-value tx from Mina's agent to itself, input = tag + decision + proposal digests
+  const job = chainLock.then(async () => {
+    const hash = await agent.client.sendTransaction({ to: agent.account.address, value: 0n, data: anchorData(dh, ph) });
+    const rc = await ctx.pub.waitForTransactionReceipt({ hash }); if (rc.status !== 'success') throw new Error('anchor tx failed ' + hash); return hash;
+  });
+  chainLock = job.catch(() => {});
+  const anchor = await job;
+  const rec = { at: new Date().toISOString(), proposal: plain(p), proposalSig: body.signature, proposalHash: ph, decision: plain(dec), decisionSig: sig, decisionHash: dh,
+    accept: res.accept, reasons: res.reasons, hints: res.hints, anchorTx: anchor, rulesOff: !!res.rulesOff, missedVisitId: Number(p.missedVisitId) };
+  st = load(); st.a2a = st.a2a || { decisions: [], used: {}, count: {} }; st.a2a.decisions.push(rec);
+  const when = day(Number(missed?.visitTime || 0)), slot = `${kst(p.slotStart)} to ${kst(p.slotEnd).slice(-5)}`;
+  say(st, res.accept ? `${when}'s missed visit: the agency's agent offered a make-up on ${slot} (Korea time, ${won(p.amount)} won). It fits your rules, so I accepted. It is paid only if Mum confirms it.`
+    : `${when}'s missed visit: the agency's agent offered a make-up on ${slot}. I declined: ${res.reasons.map((x) => x.text).join(' ')}`, res.accept ? 'ok' : 'info');
+  save(st);
+  log({ event: 'a2a_decision', missedVisitId: Number(p.missedVisitId), accept: res.accept, reasons: res.reasons.map((x) => x.code), slot: [String(p.slotStart), String(p.slotEnd)], proposalHash: ph, decisionHash: dh, anchorTx: anchor, rulesOff: !!res.rulesOff });
+  return rec;
+}
+
 async function approve({ visitId }) {
   if (!family) throw new Error('no family key on this server');
   const w = await sendLocked(family, C, 'approveExtra', [BigInt(visitId)]);
@@ -262,10 +319,18 @@ http.createServer(async (req, res) => {
     if (req.method === 'GET' && u.pathname === '/api/config') {
       const m = await mandate(ctx, C, M);
       return json(res, 200, { chainId: ctx.cfg.id, network: ctx.cfg.name, contract: C, mandateId: M, confirmer: m.confirmer, perVisitCap: String(m.perVisitCap), weeklyMax: m.weeklyMax, explorer: ctx.cfg.explorer, hspMode: HSP_MODE,
-        hspNetwork: HSP_NETWORK, carePlan: PLAN, rawPerMillionWon: String(m.rawPerMillionWon), capUsd: (() => { try { return usdFor(m.perVisitCap, m.rawPerMillionWon); } catch { return null; } })(), fx: FX });
+        hspNetwork: HSP_NETWORK, carePlan: PLAN, makeupRules: MAKEUP, rawPerMillionWon: String(m.rawPerMillionWon), capUsd: (() => { try { return usdFor(m.perVisitCap, m.rawPerMillionWon); } catch { return null; } })(), fx: FX });
     }
     if (req.method === 'GET' && u.pathname === '/api/visits') return json(res, 200, await allVisits());
     if (req.method === 'GET' && u.pathname === '/api/messages') return json(res, 200, load().messages);
+    if (req.method === 'GET' && u.pathname === '/api/a2a') return json(res, 200, (load().a2a?.decisions || []).map((d) => ({ ...d, hints: undefined })));
+    if (req.method === 'POST' && u.pathname === '/api/a2a/makeup') {   // the agency's agent; only a proposal signed by the mandate's agency is acted on
+      let body = ''; for await (const c of req) { body += c; if (body.length > 4096) return json(res, 413, { error: 'body too large' }); }
+      let b; try { b = JSON.parse(body || '{}'); } catch { return json(res, 400, { error: 'bad json' }); }
+      if (!b || typeof b !== 'object' || typeof b.signature !== 'string') return json(res, 400, { error: 'proposal + signature' });
+      try { const r = await makeup(b); return json(res, 200, { proposalHash: r.proposalHash, decision: r.decision, decisionSig: r.decisionSig, decisionHash: r.decisionHash, accept: r.accept, reasons: r.reasons, hints: r.hints, anchorTx: r.anchorTx }); }
+      catch (e) { if (e.code >= 400 && e.code < 500) return json(res, e.code, { error: String(e.message).slice(0, 200) }); throw e; }
+    }
     if (req.method === 'POST' && ['/api/confirm', '/api/approve', '/api/retry', '/api/release'].includes(u.pathname)) {
       let body = ''; for await (const c of req) { body += c; if (body.length > 4096) return json(res, 413, { error: 'body too large' }); }
       let b; try { b = JSON.parse(body || '{}'); } catch { return json(res, 400, { error: 'bad json' }); }

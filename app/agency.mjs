@@ -8,7 +8,16 @@ import { connect, send, receiptHash } from './lib/chain.mjs';
 const [mid, t, amt, carer, tasks, note] = process.argv.slice(2);
 if (note !== undefined && note.length > 2000) { console.error('visit note over 2000 characters'); process.exit(2); }
 const ctx = connect(), w = ctx.wallet(process.env.AGENCY_PK);
-const receipt = { mandateId: Number(mid), visitTime: Number(t), amountWon: Number(amt), carer, tasks, agency: w.account.address, ...(note !== undefined ? { note } : {}) };
+// AGENCY_MAKEUP_FILE=<a2a line JSON>: this visit is the make-up agreed with Mina's agent; the signed proposal and decision go into the
+// receipt, so the receipt hash on chain binds the agreement (lib/a2a.mjs). Only an accepted agreement for this mandate is used.
+let makeup;
+if (process.env.AGENCY_MAKEUP_FILE) {
+  const f = process.env.AGENCY_MAKEUP_FILE; if (fs.statSync(f).size > 20000) { console.error('makeup file too large'); process.exit(2); }
+  const a = JSON.parse(fs.readFileSync(f, 'utf8'));
+  if (!a.accept || Number(a.proposal?.mandateId) !== Number(mid)) { console.error('makeup file: not an accepted agreement for this mandate'); process.exit(2); }
+  makeup = { missedVisitId: Number(a.missedVisitId), proposal: a.proposal, proposalSig: a.proposalSig, decision: a.decision, decisionSig: a.decisionSig, anchorTx: a.anchorTx };
+}
+const receipt = { mandateId: Number(mid), visitTime: Number(t), amountWon: Number(amt), carer, tasks, agency: w.account.address, ...(note !== undefined ? { note } : {}), ...(makeup ? { makeup } : {}) };
 const h = receiptHash(receipt);
 const STATE = process.env.CM_STATE || path.join(path.dirname(new URL(import.meta.url).pathname), 'state.json');
 let st; try { st = JSON.parse(fs.readFileSync(STATE, 'utf8')); } catch { st = { messages: [], receipts: {}, payments: {} }; }

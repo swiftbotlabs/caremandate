@@ -30,3 +30,4 @@ button.go[disabled]{opacity:.55;cursor:wait}button:focus-visible,a:focus-visible
 .live:empty{display:none}.live{margin:8px 0 0}.live.ok{color:var(--ok)}.live.bad{color:var(--no)}
 video{width:100%;height:auto;border-radius:12px;display:block;background:#000;margin:4px 0 8px}
 footer{margin-top:22px}footer p{margin:6px 0}
+.judge{border:2px solid var(--ok)}ul.checks{list-style:none;margin:10px 0 0;padding:0}ul.checks li{padding:4px 0;overflow-wrap:anywhere}ul.checks li.ok{color:var(--ok)}ul.checks li.bad{color:var(--no)}ul.checks li b{color:inherit}
