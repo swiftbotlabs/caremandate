@@ -3,7 +3,7 @@
 **Pay mum's carer only for the visits that happened.**
 
 > **Judge path (2 minutes).** Run `git clone https://github.com/swiftbotlabs/caremandate && cd caremandate/app && npm ci && npm test` (Node 20+, offline).
-> Expect `# pass 37` and `# fail 0`: the HSP signing firewall on real HSP QA replies, the won-to-USDC limits, Mina's agent holding an odd visit note, and the agent-to-agent make-up rules (an offer outside Mina's rules is refused).
+> Expect `# pass 39` and `# fail 0`: the HSP signing firewall on real HSP QA replies, the won-to-USDC limits, Mina's agent holding an odd visit note, and the agent-to-agent make-up rules (an offer outside Mina's rules is refused).
 > Then open the record of the real run, re-checked on chain, with a "Check on HSK Chain now" button: https://apps.swiftbotlab.workers.dev/caremandate/
 
 Mina works in Seoul. Her mother lives in Busan, and a carer comes three times a week. Mina pays per visit, but from 300 km away she
