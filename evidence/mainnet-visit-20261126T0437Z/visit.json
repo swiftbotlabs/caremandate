@@ -1,0 +1,19 @@
+{
+ "contract": "0x1173198761ac17f8e40f97973a1e4ed0419a11c3",
+ "network": "HashKey Chain",
+ "chainId": 177,
+ "visitId": 1,
+ "amountWon": 1000,
+ "note": "Arrived 13:29, left 15:02. Cooked rice porridge for lunch and she ate most of it. Gave her morning pills with water. 25-minute walk to the park; she was in good spirits.",
+ "review": "pay, model+rules",
+ "flowId": "6e669cc5-4e6d-4eaa-9779-46066064a7c3",
+ "paidRaw": "740075",
+ "settlementTx": "0x502320e585f3ca30223a3fcaf433b8398de45dff1b09b5ad19258b7aebf17f0c",
+ "settleLabel": "Ethereum Sepolia",
+ "postTx": "0x0a8a29ed0778fad209e349e31454a879ec31d469c126abafa2e7d2f066d43546",
+ "confirmTx": "0xd9cd5d065f8e8b304fc5773cc5a635198ff5fb05338c28a75e788ddba28c4b61",
+ "markPaidTx": "0x065bea11e5dcce33fa5cb042849484eada4966712939884f462f233fd7c5cbc4",
+ "ackTx": "0x9d66e47228eb91f90c866556dc2ad9ced6ee014ec129e51596e11908e06763e5",
+ "startedAt": "2026-11-26T04:37:10.825Z",
+ "at": "2026-11-26T04:40:36.847Z"
+}

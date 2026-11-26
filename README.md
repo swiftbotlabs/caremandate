@@ -85,6 +85,7 @@ under the team name `Swift Bot Labs (CareMandate)`.
   https://apps.swiftbotlab.workers.dev/caremandate/ (built by `app/demo-page.mjs`, which re-checks every fact on chain first). Run files:
   `evidence/testnet-20261125T1718Z/`. Failure modes and the note review (offline, one command each): `evidence/offline-*/gate.json`.
 - HSK Chain mainnet: CareMandate v2 at `0x1173198761ac17f8e40f97973a1e4ed0419a11c3` (deploy tx 0x637bdb78abf2b720f102e75a806f4435f2033ab237ce7c672419e6a10f48c03c, mandate tx 0xc3efa44c821848e6c75367660f9166a5ef4810cd205a22baf5b94b61a6579678; source verified: https://hsk.blockscout.com/address/0x1173198761ac17f8e40f97973a1e4ed0419a11c3), Mina's mandate at real scale (45,000 won a visit, 1345.4 KRW/USD on chain, at most $33.44 a visit); `evidence/mainnet-20261126T0242Z/`.
+- One visit cycle on HSK Chain mainnet (26 Nov 2026, 04:37-04:40 UTC (13:37-13:40 KST)): the agency posted a 1,000-won visit, Mum's tablet signed yes, Mina's agent read the note (pay, model+rules) and paid it through HSP QA (flow `6e669cc5-4e6d-4eaa-9779-46066064a7c3`, 0.74 test USDC on Ethereum Sepolia), `markPaid` recorded it and the agency's agent acknowledged it on chain; `evidence/mainnet-visit-20261126T0437Z/`.
 <!-- STATUS:END -->
 
 ## License

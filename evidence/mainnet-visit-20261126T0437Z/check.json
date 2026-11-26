@@ -1,0 +1,1 @@
+{"checks":12,"failed":0,"fails":[],"visitId":1,"cost":{"gas":{"postTx":"123603","confirmTx":"61522","markPaidTx":"104292","ackTx":"52091"},"totalGas":"341508","feePaidHsk":"0.170754","atGasPriceGwei":500,"atGasPriceHsk":"0.170754"}}
