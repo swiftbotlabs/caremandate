@@ -101,5 +101,8 @@ under the team name `Swift Bot Labs (CareMandate)`.
 - One visit cycle on HSK Chain mainnet (26 Nov 2026, 04:37-04:40 UTC (13:37-13:40 KST)): the agency posted a 1,000-won visit, Mum's tablet signed yes, Mina's agent read the note (pay, model+rules) and paid it through HSP QA (flow `6e669cc5-4e6d-4eaa-9779-46066064a7c3`, 0.74 test USDC on Ethereum Sepolia), `markPaid` recorded it and the agency's agent acknowledged it on chain; `evidence/mainnet-visit-20261126T0437Z/`.
 <!-- STATUS:END -->
 
+**Visit by visit (26 Nov 07:34 UTC run):** 1 paid · 2 Mum said No, never paid (the two agents agreed a make-up for Thu 3 Dec 09:00 KST) · 3 paid · 4 Mum said Yes but Mina's agent held it for its note (wrong time, 20 minutes, no walk), paid only after Mina pressed Pay anyway · 5 the week's 4th visit, held by the contract (limit 3 a week) until Mina approved, then paid. So 4 paid + 1 not paid = 5. Separately, a 46,000-won visit was refused by the contract (over the 45,000-won cap) and never became a visit.
+The mainnet visit cycle settled through HSP QA in **test USDC on Ethereum Sepolia**: no real money moved; mainnet holds the real-scale mandate and the visit records.
+
 ## License
 MIT (see LICENSE). `lib/forge-std` is Foundry's standard library under its own license.
