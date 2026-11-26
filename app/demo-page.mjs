@@ -225,7 +225,7 @@ const span2 = (a, b) => { const A = new Date(a), B = new Date(b); const du = fmt
 const usd = (v) => `$${(Number(v) / 1e6).toFixed(2)}`;
 const won = (n) => `${Number(n).toLocaleString('en-US')} won`;
 const secs = (a, b) => Math.round((new Date(b) - new Date(a)) / 1000);
-const paidN = visits.filter((v) => v.p).length, noN = visits.filter((v) => !v.conf.happened).length, heldN = visits.filter((v) => v.appr).length;
+const paidN = visits.filter((v) => v.p).length, noN = visits.filter((v) => !v.conf.happened).length, heldN = visits.filter((v) => v.p && (v.appr || (v.rv && v.rv.decision === "hold"))).length;
 const runStart = start.at, runEnd = server.filter((e) => e.event === 'paid').map((e) => e.at).sort().pop();
 const sel = toFunctionSelector('visits(uint256)');
 // DEMO_FILM_SECS (default 71) and DEMO_FILM_NARRATED=1 describe the film file published beside the page (caremandate-demo.mp4)
@@ -293,7 +293,7 @@ ${MAIN?.visit ? `<section class="card judge" id="mainnet-check"><h2>Check the ma
 <noscript><p class="small">The check needs JavaScript. Without it: open the <a href="${CHAINS.mainnet.explorer}/address/${esc(MAIN.contract)}?tab=read_contract" rel="noopener">contract on the explorer</a>, read visits(${MAIN.visit.visitId}) and payments(${MAIN.visit.visitId}).</p></noscript>
 <ul id="mcheckout" class="checks small" aria-live="polite"></ul></section>` : ''}
 
-<section class="card stat" aria-label="Run summary"><div><b>${visits.length}</b>visits</div><div><b>${paidN}</b>paid via HSP</div><div><b>${noN}</b>not paid</div><div><b>${heldN}</b>held for Mina</div></section>
+<section class="card stat" aria-label="Run summary"><div><b>${visits.length}</b>visits</div><div><b>${paidN}</b>paid via HSP</div><div><b>${noN}</b>not paid</div></section><p class="h" style="margin:-6px 0 14px">${paidN} + ${noN} = ${visits.length}. ${heldN ? `${heldN} of the paid visits were first held for Mina and paid only after she said so (the note check, or the week's 4th visit over her limit of 3); nothing was ordered from HSP before that.` : ''}</p>
 
 <section class="card"><h2>Mina's rules, on chain</h2>
 <dl><div><dt>Contract (HSK Chain testnet)</dt><dd><a href="${EX}/address/${CONTRACT}" rel="noopener"><code>${CONTRACT}</code></a></dd></div>
