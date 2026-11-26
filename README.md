@@ -73,7 +73,7 @@ under the team name `Swift Bot Labs (CareMandate)`.
   per 1,000,000 won (1345.4 KRW/USD, ECB reference rate via api.frankfurter.dev, 2026-11-25, testnet scale 1:1000). Record:
   https://apps.swiftbotlab.workers.dev/caremandate/ (built by `app/demo-page.mjs`, which re-checks every fact on chain first). Run files:
   `evidence/testnet-20261125T1718Z/`. Failure modes (offline, one command each): `evidence/offline-*/gate.json`.
-- HSK Chain mainnet: rehearsed on a fork of mainnet (`app/test/fork-mainnet-rehearsal.sh`, `evidence/fork-mainnet-*/rehearsal.json`); deployed when we are selected for the demo, as the rules require of demo teams.
+- HSK Chain mainnet: CareMandate v2 deployed at `0x1173198761ac17f8e40f97973a1e4ed0419a11c3` (deploy tx 0x637bdb78abf2b720f102e75a806f4435f2033ab237ce7c672419e6a10f48c03c, mandate tx 0xc3efa44c821848e6c75367660f9166a5ef4810cd205a22baf5b94b61a6579678; source verified: https://hsk.blockscout.com/address/0x1173198761ac17f8e40f97973a1e4ed0419a11c3); evidence/mainnet-20261126T0242Z/.
 <!-- STATUS:END -->
 
 ## License
