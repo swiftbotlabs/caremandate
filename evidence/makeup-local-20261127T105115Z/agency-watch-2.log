@@ -1,0 +1,14 @@
+{"at":"2026-11-27T10:51:49.878Z","agent":"agency","event":"start","net":"local","contract":"0xe7f1725e7734ce288f8367e1bb143e90bb3f0512","mandate":1,"payTo":"0x58232CF98671Bc0Bd0E7aaA7cd6adE9EdB2E64A6","token":"0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6","settleRpc":"http://127.0.0.1:8545","every":2000}
+{"at":"2026-11-27T10:51:49.934Z","agent":"agency","event":"check","rc":0,"head":8,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-27T10:51:51.939Z","agent":"agency","event":"check","rc":0,"head":8,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-27T10:51:53.957Z","agent":"agency","event":"check","rc":0,"head":9,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-27T10:51:55.961Z","agent":"agency","event":"check","rc":0,"head":9,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-27T10:51:57.974Z","agent":"agency","event":"check","rc":0,"head":9,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-27T10:51:59.982Z","agent":"agency","event":"check","rc":0,"head":9,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-27T10:52:01.998Z","agent":"agency","event":"check","rc":0,"head":10,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-27T10:52:04.002Z","agent":"agency","event":"check","rc":0,"head":10,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-27T10:52:06.019Z","agent":"agency","event":"check","rc":0,"head":11,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-27T10:52:08.022Z","agent":"agency","event":"check","rc":0,"head":11,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-27T10:52:14.085Z","agent":"agency","event":"ack","visitId":2,"paidRaw":"30002","settlementTx":"0x7bb0235b8b6760334405ed4c1eeab6444a02362811f2e823f4203145310d1438","markPaidTx":"0xdc2afe732d07993fa4aefddca5f2bade5906f4e4448764efdb83ce5c43524b6e","ackTx":"0x405fbf3659cc8fc054a0c2b71903af12a292039cf484cc67d7b99ae82f28bcd6"}
+{"at":"2026-11-27T10:52:14.086Z","agent":"agency","event":"check","rc":0,"head":12,"settledEvents":1,"issueEvents":0,"pending":0,"acks":1}
+{"at":"2026-11-27T10:52:14.086Z","agent":"agency","event":"done","acks":1}

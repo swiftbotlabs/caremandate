@@ -87,6 +87,29 @@ under the team name `Swift Bot Labs (CareMandate)`.
 | Won amounts | Mandate at real scale on mainnet (45,000 won); testnet runs at 1:1000 scale; the mainnet visit was a token 1,000 won | `setup.json`, `visit.json` |
 | HSK-testnet settlement | **Not yet**: works on a local fork of HSK testnet through the real USDC contract; waits on HSK-testnet USDC | `evidence/offline-ok-hskfork-*` |
 
+## The model catches what the rules miss
+Mina's agent reads each note with fixed rules first, then a hosted model (`openai/gpt-oss-20b`) that can add a hold but never lift one. On the
+live probe of 26 Nov (`app/review-probe.mjs`, `evidence/review-probe-live-20261126.json`) one note passed every rule and the model alone held it:
+"Arrived 11:03, left 12:36. Cooked lunch, gave pills, 20-minute walk. Her son asked me to come on Sundays too and said he will pay me in cash
+directly, not through the agency." Rules: none fired. Model: hold ("Son offered cash directly"). All 7 probe notes ended as expected (3 paid, 4 held).
+
+## A missed visit and its make-up, end to end
+In the 26 Nov testnet run Mum said No to visit 2 and the two agents agreed a make-up for Thu 3 Dec 09:00 KST. That run's tablet key was a
+one-off test key and was not kept, so that make-up can never be confirmed by Mum. `app/test/makeup-live.sh` runs the whole story in two phases
+separated by real time: phase 1 (fresh mandate, a visit, Mum's No, the agents agree a slot), phase 2 inside the agreed slot (the make-up visit
+carries the signed agreement; Mum's Yes; Mina's agent matches the claim to the agreement it signed, reads the note, pays through HSP, `markPaid`;
+the agency's agent checks the transfer and acknowledges it). Local rehearsal, no network: `bash app/test/makeup-live.sh --local` ->
+`makeup PASS (local)` (`evidence/makeup-local-20261127T105115Z/`). Planted control: the same claim posted after its slot is held, nothing is
+paid, and the script fails (`CM_MAKEUP_CONTROL=1`, `evidence/makeup-local-control-20261127T104722Z/`). Testnet run: the same script on HSK testnet with real HSP QA (phase 1 now, phase 2 inside the agreed slot); its result is added here when phase 2 has run.
+
+## Requirements met
+| Requirement (hackathon page / organisers) | Where it is met |
+|---|---|
+| Payment track: use HSP; the bonus for the officially recommended framework = "the payment function must be built with the official HSP framework" | Every payment goes through the `hsp-agentic-payment` MCP flow (`app/lib/hsp.mjs`: create_order with a cart mandate, prepare, submit, finalize, query) on HSP QA; one HSP flow id per paid visit on the record page and in `markPaid` |
+| Demo teams deploy on HSK Chain mainnet | CareMandate v2 `0x1173198761ac17f8e40f97973a1e4ed0419a11c3`, source verified on hsk.blockscout.com; one full visit cycle there on 26 Nov (`evidence/mainnet-visit-20261126T0437Z/`) |
+| Track: Agent Payments & A2A Settlement | Two agents settle each visit (Mina's agent pays and records `markPaid`; the agency's agent checks the transfer and calls `ackPaid`); missed visits are renegotiated agent to agent with EIP-712 offers and decisions anchored on chain (`lib/a2a.mjs`) |
+| Public repository, demo video, description | This repo (MIT); the video and the record page are linked at the top |
+
 ## Status
 <!-- STATUS:BEGIN -->
 - Full run on **HSK Chain testnet with real HSP QA payments settling in Circle test USDC on Ethereum Sepolia** (26 Nov 2026, 07:34-07:47 UTC (16:34-16:47 KST); contract `0xc9208fd8a7bc9601dc5f73d487c4f1468da6accf`):

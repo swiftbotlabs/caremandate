@@ -1,0 +1,160 @@
+{
+ "messages": [
+  {
+   "at": "2026-11-27T10:48:09.663Z",
+   "text": "Friday's visit: Mum said it happened, but I am holding the payment until you look: The make-up was agreed for Fri 20 Nov, 09:00 to 10:30 Korea time; this visit is at Fri 20 Nov, 10:34. Nothing has been paid. \"Pay anyway\" on your page pays it.",
+   "kind": "warn"
+  },
+  {
+   "at": "2026-11-27T10:47:58.298Z",
+   "text": "Wednesday's missed visit: the agency's agent offered a make-up on Fri 20 Nov, 09:00 to 10:30 (Korea time, 45,000 won). It fits your rules, so I accepted. It is paid only if Mum confirms it.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-27T10:47:54.248Z",
+   "text": "Wednesday's missed visit: the agency's agent offered a make-up on Thu 19 Nov, 19:30 to 21:00. I declined: Mina's hours for visits are 09:00 to 18:00 Korea time; the slot is Thu 19 Nov, 19:30 to 21:00.",
+   "kind": "info"
+  },
+  {
+   "at": "2026-11-27T10:47:50.224Z",
+   "text": "Wednesday's visit: Mum says it did not happen. Nothing paid.",
+   "kind": "warn"
+  }
+ ],
+ "receipts": {
+  "0x002d7636e0f11c0cffeb568bcf83043880a9e0423090b854e20ff35c88fb5bd2": {
+   "mandateId": 1,
+   "visitTime": 1794998248,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Tue visit: lunch, medicines, a short walk",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 19:39, left 21:12. Cooked rice porridge for lunch and she ate most of it. Gave her morning pills with water. 25-minute walk to the park; she was in good spirits."
+  },
+  "0x1b70ef2c03d6c21f65d2da40a85e1685d53cd00c59858a9a122ca4873fa5fbcb": {
+   "mandateId": 1,
+   "visitTime": 1795138440,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Make-up for Tuesday's missed visit: lunch, medicines, a short walk",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 10:36, left 12:09. Cooked rice porridge for lunch and she ate most of it. Gave her morning pills with water. 25-minute walk to the park; she was in good spirits.",
+   "makeup": {
+    "missedVisitId": 1,
+    "proposal": {
+     "mandateId": "1",
+     "missedVisitId": "1",
+     "slotStart": "1795132800",
+     "slotEnd": "1795138200",
+     "amount": "45000",
+     "carer": "Ji-woo",
+     "nonce": "1795776474266",
+     "expires": "1795020470"
+    },
+    "proposalSig": "0xc5cd3d46b1159099b7dd5fc5ee56a92216091623008e75c92e5cb57647c94f0a0dfc70a1b7c3a6ff3830f61e155f5c940a6939bf118ea729ae8448eee9f3d4781c",
+    "decision": {
+     "proposal": "0xe4831ed5c6c4792417fee1032a13376e83396dd305f1db3231a735b44de5d06f",
+     "accept": true,
+     "reasons": "",
+     "decidedAt": "1794998870"
+    },
+    "decisionSig": "0x69e85987040db371d1f3f1bdf909d9aab7aa3736b6a56f4c96516d893507a03d1adbf272e23501b66e42143880baca0018039cdeb83361fff8da5967671e29e41b",
+    "anchorTx": "0x3fd6d81f165982ded92337e13c4f45794736a665efbb514332956fa37d517e2f"
+   }
+  }
+ },
+ "payments": {},
+ "a2a": {
+  "decisions": [
+   {
+    "at": "2026-11-27T10:47:54.247Z",
+    "proposal": {
+     "mandateId": "1",
+     "missedVisitId": "1",
+     "slotStart": "1795084200",
+     "slotEnd": "1795089600",
+     "amount": "45000",
+     "carer": "Ji-woo",
+     "nonce": "1795776469893",
+     "expires": "1795020466"
+    },
+    "proposalSig": "0xc7ed0d67627da7d2ec2652e085bf21ef326bdc43d8589e7424bef86d97dafd653c65993769bb8ea39c8f2aca0b631688c7390f78c3140325090fa659985382421c",
+    "proposalHash": "0xe8bc02e8a74a7dc57f2db0d4e7f23b1d18fcfdec4ce1b3fcc6117a468445df96",
+    "decision": {
+     "proposal": "0xe8bc02e8a74a7dc57f2db0d4e7f23b1d18fcfdec4ce1b3fcc6117a468445df96",
+     "accept": false,
+     "reasons": "outside_hours",
+     "decidedAt": "1794998866"
+    },
+    "decisionSig": "0xc6990fb935bac7bc3dd20b713d3188ee055e12aa22d97c980d9c13c3627187f664646a8f3ff5491a1efe0c964427f8acda3653c904b3feb6ed5f116c59473f4b1c",
+    "decisionHash": "0x93184745789f0bd309d2063992db1de19bf88ba9c53910a0155adfe88e88dd40",
+    "accept": false,
+    "reasons": [
+     {
+      "code": "outside_hours",
+      "text": "Mina's hours for visits are 09:00 to 18:00 Korea time; the slot is Thu 19 Nov, 19:30 to 21:00."
+     }
+    ],
+    "hints": {
+     "hours": [
+      9,
+      18
+     ]
+    },
+    "anchorTx": "0x7b834ce2f818c4c8d7d29d1fd9d23d820e832e79949d350646980f2eca03d775",
+    "rulesOff": false,
+    "missedVisitId": 1
+   },
+   {
+    "at": "2026-11-27T10:47:58.290Z",
+    "proposal": {
+     "mandateId": "1",
+     "missedVisitId": "1",
+     "slotStart": "1795132800",
+     "slotEnd": "1795138200",
+     "amount": "45000",
+     "carer": "Ji-woo",
+     "nonce": "1795776474266",
+     "expires": "1795020470"
+    },
+    "proposalSig": "0xc5cd3d46b1159099b7dd5fc5ee56a92216091623008e75c92e5cb57647c94f0a0dfc70a1b7c3a6ff3830f61e155f5c940a6939bf118ea729ae8448eee9f3d4781c",
+    "proposalHash": "0xe4831ed5c6c4792417fee1032a13376e83396dd305f1db3231a735b44de5d06f",
+    "decision": {
+     "proposal": "0xe4831ed5c6c4792417fee1032a13376e83396dd305f1db3231a735b44de5d06f",
+     "accept": true,
+     "reasons": "",
+     "decidedAt": "1794998870"
+    },
+    "decisionSig": "0x69e85987040db371d1f3f1bdf909d9aab7aa3736b6a56f4c96516d893507a03d1adbf272e23501b66e42143880baca0018039cdeb83361fff8da5967671e29e41b",
+    "decisionHash": "0x5d0487a316f2d9c64f9514fbf38daf64b628786fda39715119e009c9cfe31c03",
+    "accept": true,
+    "reasons": [],
+    "hints": {},
+    "anchorTx": "0x3fd6d81f165982ded92337e13c4f45794736a665efbb514332956fa37d517e2f",
+    "rulesOff": false,
+    "missedVisitId": 1
+   }
+  ],
+  "used": {},
+  "count": {
+   "1": 2
+  }
+ },
+ "reviews": {
+  "2": {
+   "at": "2026-11-27T10:48:09.662Z",
+   "decision": "hold",
+   "source": "a2a",
+   "reasons": [
+    "The make-up was agreed for Fri 20 Nov, 09:00 to 10:30 Korea time; this visit is at Fri 20 Nov, 10:34."
+   ],
+   "rules": [
+    "makeup_outside_slot"
+   ],
+   "makeup": {
+    "decisionHash": "0x5d0487a316f2d9c64f9514fbf38daf64b628786fda39715119e009c9cfe31c03",
+    "missedVisitId": 1
+   }
+  }
+ }
+}

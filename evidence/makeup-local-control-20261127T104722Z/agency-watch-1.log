@@ -1,0 +1,10 @@
+{"at":"2026-11-27T10:47:37.773Z","agent":"agency","event":"start","net":"local","contract":"0xe7f1725e7734ce288f8367e1bb143e90bb3f0512","mandate":1,"payTo":"0x58232CF98671Bc0Bd0E7aaA7cd6adE9EdB2E64A6","token":"0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6","settleRpc":"http://127.0.0.1:8545","every":2000}
+{"at":"2026-11-27T10:47:37.828Z","agent":"agency","event":"check","rc":0,"head":3,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-27T10:47:39.830Z","agent":"agency","event":"check","rc":0,"head":3,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-27T10:47:41.851Z","agent":"agency","event":"check","rc":0,"head":4,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-27T10:47:43.855Z","agent":"agency","event":"check","rc":0,"head":4,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-27T10:47:45.866Z","agent":"agency","event":"check","rc":0,"head":4,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-27T10:47:47.871Z","agent":"agency","event":"check","rc":0,"head":4,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}
+{"at":"2026-11-27T10:47:54.264Z","agent":"agency","event":"a2a","missedVisitId":1,"n":1,"accept":false,"reasons":["outside_hours"],"slot":[1795084200,1795089600],"anchorTx":"0x7b834ce2f818c4c8d7d29d1fd9d23d820e832e79949d350646980f2eca03d775"}
+{"at":"2026-11-27T10:47:58.307Z","agent":"agency","event":"a2a","missedVisitId":1,"n":2,"accept":true,"reasons":[],"slot":[1795132800,1795138200],"anchorTx":"0x3fd6d81f165982ded92337e13c4f45794736a665efbb514332956fa37d517e2f"}
+{"at":"2026-11-27T10:47:58.308Z","agent":"agency","event":"check","rc":0,"head":5,"settledEvents":0,"issueEvents":0,"pending":0,"acks":0}

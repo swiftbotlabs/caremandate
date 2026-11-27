@@ -1,0 +1,191 @@
+{
+ "messages": [
+  {
+   "at": "2026-11-27T10:52:10.494Z",
+   "text": "Friday's visit: confirmed by Mum, paid (45,000 won visit) via HSP: $0.03 test USDC on hashkey-testnet.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-27T10:51:47.015Z",
+   "text": "Wednesday's missed visit: the agency's agent offered a make-up on Fri 20 Nov, 09:00 to 10:30 (Korea time, 45,000 won). It fits your rules, so I accepted. It is paid only if Mum confirms it.",
+   "kind": "ok"
+  },
+  {
+   "at": "2026-11-27T10:51:42.979Z",
+   "text": "Wednesday's missed visit: the agency's agent offered a make-up on Thu 19 Nov, 19:30 to 21:00. I declined: Mina's hours for visits are 09:00 to 18:00 Korea time; the slot is Thu 19 Nov, 19:30 to 21:00.",
+   "kind": "info"
+  },
+  {
+   "at": "2026-11-27T10:51:42.956Z",
+   "text": "Wednesday's visit: Mum says it did not happen. Nothing paid.",
+   "kind": "warn"
+  }
+ ],
+ "receipts": {
+  "0xadc87bb9d2a189e2c13305843cc61397c1e5f3734849a832dbca8b9cae19aa2a": {
+   "mandateId": 1,
+   "visitTime": 1794998481,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Tue visit: lunch, medicines, a short walk",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 19:43, left 21:16. Cooked rice porridge for lunch and she ate most of it. Gave her morning pills with water. 25-minute walk to the park; she was in good spirits."
+  },
+  "0xd52555ae86f1b133e6dfb18340a8a339c26f8d642759b182a10e5a150cd19a19": {
+   "mandateId": 1,
+   "visitTime": 1795133340,
+   "amountWon": 45000,
+   "carer": "Ji-woo",
+   "tasks": "Make-up for Tuesday's missed visit: lunch, medicines, a short walk",
+   "agency": "0x90F79bf6EB2c4f870365E785982E1f101E93b906",
+   "note": "Arrived 09:11, left 10:44. Cooked rice porridge for lunch and she ate most of it. Gave her morning pills with water. 25-minute walk to the park; she was in good spirits.",
+   "makeup": {
+    "missedVisitId": 1,
+    "proposal": {
+     "mandateId": "1",
+     "missedVisitId": "1",
+     "slotStart": "1795132800",
+     "slotEnd": "1795138200",
+     "amount": "45000",
+     "carer": "Ji-woo",
+     "nonce": "1795776702986",
+     "expires": "1795020702"
+    },
+    "proposalSig": "0xcea39008483d90e8dc90f2601b8d839886ccc97c58b9f64b831147a32b35413e6d6e6fb6c94b9df95cb68d9ed7b365f901a71c7ef574ad0e48aebc799d2d4f561b",
+    "decision": {
+     "proposal": "0xd76c8251a51692e3e108440d25a3ccca6f9488fc0fcc4d01ca4737739d6edf11",
+     "accept": true,
+     "reasons": "",
+     "decidedAt": "1794999102"
+    },
+    "decisionSig": "0xd4549968f2f4b96d71ba834101e73f7dff79f0ef54a9b02c94897fc24510830719776279e322e7456671a1bdec3572b3b675624904990ba65c0bde38de88d2dd1b",
+    "anchorTx": "0xcde505ddcb9536a6beb1350373e9ccbbfe0fe0aba4f35ff49fb6f0c0a3c3a98c"
+   }
+  }
+ },
+ "payments": {
+  "2": {
+   "mode": "qa",
+   "status": "payment-safe",
+   "startedAt": "2026-11-27T10:52:02.366Z",
+   "attempts": [],
+   "autoRetries": 0,
+   "usd": "0.03",
+   "maxRaw": "33993",
+   "flowId": "MOCKHSP-adee567c-f02f-4e9c-8844-a1da3fa86e4b",
+   "paymentRequestId": "CARE-PR-20261127105202-44a4d3",
+   "paidRaw": "30002",
+   "submitted": true,
+   "hspStatus": "payment-safe",
+   "txHash": "0x7bb0235b8b6760334405ed4c1eeab6444a02362811f2e823f4203145310d1438",
+   "network": "hashkey-testnet",
+   "attributionVerified": true,
+   "token": "0x8FE3cB719Ee4410E236Cd6b72ab1fCDC06eF53c6",
+   "chainId": 133,
+   "retryable": false,
+   "settledAt": "2026-11-27T10:52:06.465Z",
+   "markPaidTx": "0xdc2afe732d07993fa4aefddca5f2bade5906f4e4448764efdb83ce5c43524b6e"
+  }
+ },
+ "a2a": {
+  "decisions": [
+   {
+    "at": "2026-11-27T10:51:42.978Z",
+    "proposal": {
+     "mandateId": "1",
+     "missedVisitId": "1",
+     "slotStart": "1795084200",
+     "slotEnd": "1795089600",
+     "amount": "45000",
+     "carer": "Ji-woo",
+     "nonce": "1795776702674",
+     "expires": "1795020698"
+    },
+    "proposalSig": "0x4553df5b2c5a6f5494ca7a07c1c2bd6593a59da1e5e5606eab7b1575282572c62828bfcae1fd3b4acab88505803963ae6b489c6ca4e1525cef7191d7881eeca71c",
+    "proposalHash": "0x637869b44905bb15d0cc64bf54687b8f00701ea39e95933232ea8fbd2dcd1695",
+    "decision": {
+     "proposal": "0x637869b44905bb15d0cc64bf54687b8f00701ea39e95933232ea8fbd2dcd1695",
+     "accept": false,
+     "reasons": "outside_hours",
+     "decidedAt": "1794999098"
+    },
+    "decisionSig": "0x207ae7c8ba3d5858feab3b8c9862d9149b29bdfbec7354faa696e5b9dfe0815d679031d0f29818067007a59dba7a272c701a10e7394a51902c89f0b33511d3ae1b",
+    "decisionHash": "0x643317b25c23f907213ecf9cf83a59d572d58f2025e1bef4a9d1888067cf2f46",
+    "accept": false,
+    "reasons": [
+     {
+      "code": "outside_hours",
+      "text": "Mina's hours for visits are 09:00 to 18:00 Korea time; the slot is Thu 19 Nov, 19:30 to 21:00."
+     }
+    ],
+    "hints": {
+     "hours": [
+      9,
+      18
+     ]
+    },
+    "anchorTx": "0xe7426cc48a86142a2f3e8660e83df587fabd40006268a0649bfe2e14792849f3",
+    "rulesOff": false,
+    "missedVisitId": 1
+   },
+   {
+    "at": "2026-11-27T10:51:47.006Z",
+    "proposal": {
+     "mandateId": "1",
+     "missedVisitId": "1",
+     "slotStart": "1795132800",
+     "slotEnd": "1795138200",
+     "amount": "45000",
+     "carer": "Ji-woo",
+     "nonce": "1795776702986",
+     "expires": "1795020702"
+    },
+    "proposalSig": "0xcea39008483d90e8dc90f2601b8d839886ccc97c58b9f64b831147a32b35413e6d6e6fb6c94b9df95cb68d9ed7b365f901a71c7ef574ad0e48aebc799d2d4f561b",
+    "proposalHash": "0xd76c8251a51692e3e108440d25a3ccca6f9488fc0fcc4d01ca4737739d6edf11",
+    "decision": {
+     "proposal": "0xd76c8251a51692e3e108440d25a3ccca6f9488fc0fcc4d01ca4737739d6edf11",
+     "accept": true,
+     "reasons": "",
+     "decidedAt": "1794999102"
+    },
+    "decisionSig": "0xd4549968f2f4b96d71ba834101e73f7dff79f0ef54a9b02c94897fc24510830719776279e322e7456671a1bdec3572b3b675624904990ba65c0bde38de88d2dd1b",
+    "decisionHash": "0x67e1da711305e28b728bc01459cffc8e1b076cd22004dd5912ec5a213c8c6a2e",
+    "accept": true,
+    "reasons": [],
+    "hints": {},
+    "anchorTx": "0xcde505ddcb9536a6beb1350373e9ccbbfe0fe0aba4f35ff49fb6f0c0a3c3a98c",
+    "rulesOff": false,
+    "missedVisitId": 1
+   }
+  ],
+  "used": {
+   "0x67e1da711305e28b728bc01459cffc8e1b076cd22004dd5912ec5a213c8c6a2e": 2
+  },
+  "count": {
+   "1": 2
+  }
+ },
+ "reviews": {
+  "2": {
+   "at": "2026-11-27T10:52:02.360Z",
+   "decision": "pay",
+   "source": "rules",
+   "reasons": [],
+   "rules": [],
+   "facts": {
+    "arrive": 551,
+    "leave": 644,
+    "visitStart": "09:09",
+    "minutes": 93
+   },
+   "model": {
+    "error": "off"
+   },
+   "makeup": {
+    "decisionHash": "0x67e1da711305e28b728bc01459cffc8e1b076cd22004dd5912ec5a213c8c6a2e",
+    "missedVisitId": 1,
+    "matched": true
+   }
+  }
+ }
+}
